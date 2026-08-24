@@ -30,6 +30,11 @@ playground.xcworkspace
 # .swiftpm
 
 .build/
+.swiftpm/
+
+# macOS and local editors
+.DS_Store
+.vscode/
 
 # CocoaPods
 #
