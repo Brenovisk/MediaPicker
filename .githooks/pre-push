@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -eu
+
+repository_root=$(git rev-parse --show-toplevel)
+
+if [ -f "$repository_root/Package.swift" ]; then
+    package_directory="$repository_root"
+elif [ -f "$repository_root/MediaPicker/Package.swift" ]; then
+    package_directory="$repository_root/MediaPicker"
+else
+    echo "error: Package.swift was not found." >&2
+    exit 1
+fi
+
+echo "Running MediaPicker package tests before push..."
+cd "$package_directory"
+swift test
