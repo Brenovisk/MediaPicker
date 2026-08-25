@@ -33,6 +33,7 @@ cleanup() {
   rm -f \
     "${PROMPT_FILE:-}" \
     "${AI_OUTPUT_FILE:-}" \
+    "${AI_ERROR_FILE:-}" \
     "${BODY_FILE:-}"
 }
 
@@ -110,20 +111,21 @@ generate_pr_with_ai() {
   local provider="$1"
   local prompt_file="$2"
   local output_file="$3"
+  local error_file="$4"
 
   case "$provider" in
     claude)
-      claude -p < "$prompt_file" > "$output_file"
+      claude -p < "$prompt_file" > "$output_file" 2> "$error_file"
       ;;
 
     codex)
-      codex exec "$(cat "$prompt_file")" > "$output_file"
+      codex exec "$(cat "$prompt_file")" > "$output_file" 2> "$error_file"
       ;;
 
     gemini)
       cat "$prompt_file" \
         | gemini -p "Generate the Pull Request using the provided instructions and context." \
-        > "$output_file"
+        > "$output_file" 2> "$error_file"
       ;;
 
     *)
@@ -153,8 +155,6 @@ select_ai_provider "${1:-}"
 
 validate_ai_provider
 
-info "AI provider: $AI_PROVIDER"
-
 # ---------------------------------------------------------
 # Resolve repository
 # ---------------------------------------------------------
@@ -181,9 +181,6 @@ else
   BASE_BRANCH="develop"
 fi
 
-info "Source branch: $CURRENT_BRANCH"
-info "Target branch: $BASE_BRANCH"
-
 # ---------------------------------------------------------
 # Validate repository state
 # ---------------------------------------------------------
@@ -203,9 +200,9 @@ git remote get-url origin >/dev/null 2>&1 ||
 # Fetch target branch
 # ---------------------------------------------------------
 
-info "Fetching origin/$BASE_BRANCH..."
+info "Syncing branch with origin..."
 
-git fetch origin "$BASE_BRANCH"
+git fetch --quiet origin "$BASE_BRANCH"
 
 # ---------------------------------------------------------
 # Validate branch has changes
@@ -228,14 +225,10 @@ if ! git ls-remote \
   "$CURRENT_BRANCH" \
   >/dev/null 2>&1; then
 
-  info "Remote branch does not exist. Pushing..."
-
-  git push -u origin "$CURRENT_BRANCH"
+  git push --quiet -u origin "$CURRENT_BRANCH"
 
 else
-  info "Updating remote branch..."
-
-  git push
+  git push --quiet
 fi
 
 # ---------------------------------------------------------
@@ -256,8 +249,6 @@ fi
 # ---------------------------------------------------------
 # Collect Git context
 # ---------------------------------------------------------
-
-info "Analyzing changes..."
 
 COMMITS=$(git log \
   "origin/$BASE_BRANCH..HEAD" \
@@ -303,6 +294,7 @@ PR_TEMPLATE=$(cat "$TEMPLATE_FILE")
 
 PROMPT_FILE=$(mktemp)
 AI_OUTPUT_FILE=$(mktemp)
+AI_ERROR_FILE=$(mktemp)
 BODY_FILE=$(mktemp)
 
 # ---------------------------------------------------------
@@ -442,10 +434,14 @@ EOF
 
 info "Generating Pull Request description with $AI_PROVIDER..."
 
-generate_pr_with_ai \
+if ! generate_pr_with_ai \
   "$AI_PROVIDER" \
   "$PROMPT_FILE" \
-  "$AI_OUTPUT_FILE"
+  "$AI_OUTPUT_FILE" \
+  "$AI_ERROR_FILE"; then
+  [[ ! -s "$AI_ERROR_FILE" ]] || cat "$AI_ERROR_FILE" >&2
+  error "$AI_PROVIDER failed to generate the Pull Request description."
+fi
 
 # ---------------------------------------------------------
 # Validate AI output
@@ -524,37 +520,16 @@ fi
 # ---------------------------------------------------------
 
 echo ""
-echo "────────────────────────────────────────"
-echo "AI PROVIDER"
-echo "────────────────────────────────────────"
-echo "$AI_PROVIDER"
-
+echo "Pull Request: $CURRENT_BRANCH → $BASE_BRANCH"
 echo ""
-echo "────────────────────────────────────────"
-echo "SOURCE"
-echo "────────────────────────────────────────"
-echo "$CURRENT_BRANCH"
-
-echo ""
-echo "────────────────────────────────────────"
-echo "TARGET"
-echo "────────────────────────────────────────"
-echo "$BASE_BRANCH"
-
-echo ""
-echo "────────────────────────────────────────"
-echo "PR TITLE"
-echo "────────────────────────────────────────"
+echo "Title:"
 echo "$PR_TITLE"
 
 echo ""
-echo "────────────────────────────────────────"
-echo "PR DESCRIPTION"
-echo "────────────────────────────────────────"
+echo "Description:"
 cat "$BODY_FILE"
 
 echo ""
-echo "────────────────────────────────────────"
 echo ""
 
 # ---------------------------------------------------------
@@ -585,5 +560,4 @@ PR_URL=$(gh pr create \
 # ---------------------------------------------------------
 
 echo ""
-success "Pull Request created:"
-echo "$PR_URL"
+success "Pull Request created: $PR_URL"
