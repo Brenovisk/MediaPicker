@@ -37,6 +37,7 @@ cleanup() {
   rm -f \
     "${PROMPT_FILE:-}" \
     "${AI_OUTPUT_FILE:-}" \
+    "${AI_ERROR_FILE:-}" \
     "${PLAN_FILE:-}"
 }
 
@@ -114,20 +115,21 @@ generate_with_ai() {
   local provider="$1"
   local prompt_file="$2"
   local output_file="$3"
+  local error_file="$4"
 
   case "$provider" in
     claude)
-      claude -p < "$prompt_file" > "$output_file"
+      claude -p < "$prompt_file" > "$output_file" 2> "$error_file"
       ;;
 
     codex)
-      codex exec "$(cat "$prompt_file")" > "$output_file"
+      codex exec "$(cat "$prompt_file")" > "$output_file" 2> "$error_file"
       ;;
 
     gemini)
       cat "$prompt_file" |
         gemini -p "Analyze the staged Git changes and generate the requested commit plan." \
-        > "$output_file"
+        > "$output_file" 2> "$error_file"
       ;;
 
     *)
@@ -157,8 +159,6 @@ select_ai_provider "${1:-}"
 
 validate_ai_provider
 
-info "AI provider: $AI_PROVIDER"
-
 # ---------------------------------------------------------
 # Ask Issue Number
 # ---------------------------------------------------------
@@ -172,8 +172,6 @@ ISSUE_NUMBER="${ISSUE_NUMBER#\#}"
 if [[ ! "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
   error "Issue number must be numeric."
 fi
-
-info "Issue: #$ISSUE_NUMBER"
 
 # ---------------------------------------------------------
 # Validate Staged Changes
@@ -269,6 +267,7 @@ fi
 
 PROMPT_FILE=$(mktemp)
 AI_OUTPUT_FILE=$(mktemp)
+AI_ERROR_FILE=$(mktemp)
 PLAN_FILE=$(mktemp)
 
 # ---------------------------------------------------------
@@ -437,10 +436,14 @@ EOF
 
 info "Generating commit plan with $AI_PROVIDER..."
 
-generate_with_ai \
+if ! generate_with_ai \
   "$AI_PROVIDER" \
   "$PROMPT_FILE" \
-  "$AI_OUTPUT_FILE"
+  "$AI_OUTPUT_FILE" \
+  "$AI_ERROR_FILE"; then
+  [[ ! -s "$AI_ERROR_FILE" ]] || cat "$AI_ERROR_FILE" >&2
+  error "$AI_PROVIDER failed to generate a commit plan."
+fi
 
 # ---------------------------------------------------------
 # Extract JSON
@@ -583,10 +586,7 @@ done
 # ---------------------------------------------------------
 
 echo ""
-echo "────────────────────────────────────────"
-echo "COMMIT PLAN"
-echo "────────────────────────────────────────"
-echo ""
+echo "Commit plan:"
 
 for ((i = 0; i < COMMIT_COUNT; i++)); do
 
@@ -609,10 +609,7 @@ for ((i = 0; i < COMMIT_COUNT; i++)); do
 
 done
 
-echo "────────────────────────────────────────"
-
 if [[ "$COMMIT_COUNT" -gt 1 ]]; then
-  echo ""
   info "$COMMIT_COUNT logical commits will be created."
 fi
 
@@ -633,8 +630,6 @@ fi
 # Unstage Current Changes
 # ---------------------------------------------------------
 
-info "Preparing commit groups..."
-
 git reset HEAD -- "${STAGED_FILES[@]}" >/dev/null
 
 # ---------------------------------------------------------
@@ -654,20 +649,13 @@ for ((i = 0; i < COMMIT_COUNT; i++)); do
     COMMIT_FILES+=("$file")
   done < <(jq -r ".commits[$i].files[]" "$PLAN_FILE")
 
-  echo ""
-  info "Preparing commit $((i + 1))/$COMMIT_COUNT..."
-
   git add -A -- "${COMMIT_FILES[@]}"
 
   if git diff --cached --quiet; then
     error "No changes were staged for commit: $MESSAGE"
   fi
 
-  info "$MESSAGE"
-
-  git commit -m "$MESSAGE"
-
-  success "Commit created."
+  git commit --quiet -m "$MESSAGE"
 done
 
 # ---------------------------------------------------------
@@ -675,15 +663,13 @@ done
 # ---------------------------------------------------------
 
 echo ""
-echo "────────────────────────────────────────"
-echo "CREATED COMMITS"
-echo "────────────────────────────────────────"
-echo ""
-
 git log \
   -n "$COMMIT_COUNT" \
   --pretty=format:"%C(auto)%h%Creset %s"
 
 echo ""
-echo ""
-success "$COMMIT_COUNT commit(s) created successfully."
+if [[ "$COMMIT_COUNT" -eq 1 ]]; then
+  success "Created 1 commit."
+else
+  success "Created $COMMIT_COUNT commits."
+fi
