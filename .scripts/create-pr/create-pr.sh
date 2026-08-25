@@ -290,7 +290,7 @@ fi
 # Load PR template
 # ---------------------------------------------------------
 
-TEMPLATE_FILE=".github/pull_request_template.md"
+TEMPLATE_FILE=".github/pull-request-template.md"
 
 [[ -f "$TEMPLATE_FILE" ]] ||
   error "$TEMPLATE_FILE was not found."
