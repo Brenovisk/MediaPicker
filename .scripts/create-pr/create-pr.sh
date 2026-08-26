@@ -40,6 +40,21 @@ cleanup() {
 trap cleanup EXIT
 
 # ---------------------------------------------------------
+# Run package tests first
+# ---------------------------------------------------------
+
+command_exists swift ||
+  error "Swift is required."
+
+info "Running package tests..."
+
+if ! swift test; then
+  error "Package tests failed. Pull Request creation was stopped."
+fi
+
+success "Package tests passed."
+
+# ---------------------------------------------------------
 # AI provider
 # ---------------------------------------------------------
 
