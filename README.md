@@ -115,7 +115,7 @@ To run package tests automatically before every push, install the repository's
 version-controlled Git hooks once:
 
 ```sh
-./Scripts/install-git-hooks.sh
+./.githooks/install-git-hooks.sh
 ```
 
 ## Project structure
