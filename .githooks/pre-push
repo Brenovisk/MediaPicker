@@ -15,4 +15,10 @@ fi
 
 echo "Running MediaPicker package tests before push..."
 cd "$package_directory"
+
+if command -v xcrun >/dev/null 2>&1; then
+    SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+    export SDKROOT
+fi
+
 swift test
