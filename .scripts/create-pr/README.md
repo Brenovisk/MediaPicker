@@ -65,22 +65,42 @@ The base branch is selected automatically:
 This supports feature branches merging into `develop`, followed by release Pull
 Requests from `develop` into `master`.
 
+Branches targeting `develop` must include the related issue number immediately
+after the first slash:
+
+```text
+feat/7-media-type
+fix/14-camera-permission
+chore/5-contribution-conventions
+```
+
+The script validates that the issue exists and writes a deterministic reference
+in the Pull Request body:
+
+```text
+Related issue: #7
+```
+
+Release Pull Requests from `develop` to `master` do not require an issue number.
+
 ## What the script does
 
 1. Runs `swift test` before any Pull Request preparation.
 2. Stops if the package does not compile or any test fails.
 3. Validates Git, GitHub CLI authentication, and the selected AI CLI.
-4. Resolves the current and base branches.
-5. Requires a clean working tree and an `origin` remote.
-6. Fetches the base branch and verifies that the current branch has commits to
+4. Resolves the current branch, base branch, and related issue number.
+5. Validates that the related issue exists for branches targeting `develop`.
+6. Requires a clean working tree and an `origin` remote.
+7. Fetches the base branch and verifies that the current branch has commits to
    propose.
-7. Pushes the current branch, configuring its upstream when necessary.
-8. Stops if an open Pull Request already exists for the same branch pair.
-9. Collects commits, changed files, statistics, the Git diff, and the repository
+8. Pushes the current branch, configuring its upstream when necessary.
+9. Stops if an open Pull Request already exists for the same branch pair.
+10. Collects commits, changed files, statistics, the Git diff, and the repository
    Pull Request template.
-10. Generates and validates a title and description with the selected AI.
-11. Shows the complete proposal and asks for confirmation.
-12. Creates the Pull Request with `gh pr create` after confirmation.
+11. Generates and validates a title and description with the selected AI.
+12. Inserts `Related issue: #N` into the Related Issues section.
+13. Shows the complete proposal and asks for confirmation.
+14. Creates the Pull Request with `gh pr create` after confirmation.
 
 ## Generated content rules
 
@@ -104,6 +124,8 @@ No Pull Request is created when:
 - `swift test` fails;
 - the working tree contains uncommitted changes;
 - the current branch is `master`;
+- a branch targeting `develop` does not follow `type/issue-description`;
+- the issue extracted from the branch does not exist or is inaccessible;
 - the branch contains no commits relative to its base;
 - an open Pull Request already exists for the same source and base;
 - the AI command fails or returns invalid output;
@@ -139,3 +161,12 @@ script.
 
 Open the URL printed by the script and continue working with the existing Pull
 Request instead of creating a duplicate.
+
+### The branch name is rejected
+
+Rename the branch so the related issue number appears immediately after its
+first slash:
+
+```sh
+git branch -m feat/7-media-type
+```

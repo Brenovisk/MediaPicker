@@ -160,17 +160,29 @@ select_ai_provider "${1:-}"
 validate_ai_provider
 
 # ---------------------------------------------------------
-# Ask Issue Number
+# Resolve Issue Number
 # ---------------------------------------------------------
 
-echo ""
-read -r -p "Issue number: " ISSUE_NUMBER
+CURRENT_BRANCH=$(git branch --show-current)
 
-# Remove optional #
-ISSUE_NUMBER="${ISSUE_NUMBER#\#}"
+[[ -n "$CURRENT_BRANCH" ]] ||
+  error "Unable to determine the current Git branch."
 
-if [[ ! "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
-  error "Issue number must be numeric."
+if [[ "$CURRENT_BRANCH" == "develop" || "$CURRENT_BRANCH" == "master" ]]; then
+  echo ""
+  read -r -p "Issue number: " ISSUE_NUMBER
+
+  # Remove optional # from manually entered values.
+  ISSUE_NUMBER="${ISSUE_NUMBER#\#}"
+
+  if [[ ! "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+    error "Issue number must be numeric."
+  fi
+elif [[ "$CURRENT_BRANCH" =~ ^[^/]+/([0-9]+)([-/].*)?$ ]]; then
+  ISSUE_NUMBER="${BASH_REMATCH[1]}"
+  info "Using issue #$ISSUE_NUMBER from branch $CURRENT_BRANCH."
+else
+  error "Branch must follow the format type/issue-description (example: feat/7-media-type)."
 fi
 
 # ---------------------------------------------------------
