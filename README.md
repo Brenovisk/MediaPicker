@@ -131,6 +131,8 @@ MediaPicker/
 
 The detailed scope, milestones, dependencies, acceptance criteria, and release
 checklist are maintained in the [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md).
+The source-area responsibilities, dependency direction, access-control rules,
+and concurrency ownership are documented in [Architecture](Docs/Architecture.md).
 
 ## License
 
