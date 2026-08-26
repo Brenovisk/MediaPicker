@@ -19,13 +19,19 @@ creates any commit.
 
 The command must be run from inside the MediaPicker Git repository.
 
-## Setup
+## Install commands
 
-Make the script executable once:
+Install the repository command launchers once after cloning:
 
 ```sh
-chmod +x .scripts/create-commit/create-commit.sh
+./.scripts/install-commands.sh
 ```
+
+This creates `create-commit` and `create-pr` links in
+`${XDG_BIN_HOME:-$HOME/.local/bin}`. The installer does not replace an existing
+file or a command installed from another location.
+
+## Setup
 
 Stage only the changes that should be considered for the commits:
 
@@ -38,15 +44,15 @@ git add <files>
 Choose the AI provider interactively:
 
 ```sh
-.scripts/create-commit/create-commit.sh
+create-commit
 ```
 
 Or provide it as the first argument:
 
 ```sh
-.scripts/create-commit/create-commit.sh codex
-.scripts/create-commit/create-commit.sh claude
-.scripts/create-commit/create-commit.sh gemini
+create-commit codex
+create-commit claude
+create-commit gemini
 ```
 
 On feature branches, the script extracts the issue number automatically from
