@@ -1,5 +1,7 @@
 # MediaPicker
 
+[![Tests](https://github.com/Brenovisk/MediaPicker/actions/workflows/tests.yml/badge.svg?branch=develop)](https://github.com/Brenovisk/MediaPicker/actions/workflows/tests.yml?query=branch%3Adevelop)
+
 MediaPicker is a SwiftUI-first package for capturing photos and videos with the
 camera or selecting them from the photo library through one consistent API.
 
