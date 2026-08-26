@@ -49,8 +49,20 @@ Or provide it as the first argument:
 .scripts/create-commit/create-commit.sh gemini
 ```
 
-The script then asks for the related GitHub issue number. Both `4` and `#4`
-are accepted.
+On feature branches, the script extracts the issue number automatically from
+the branch name:
+
+```text
+feat/7-media-type
+fix/14-camera-permission
+chore/5-contribution-conventions
+```
+
+These branches produce commit scopes `(7)`, `(14)`, and `(5)`, respectively.
+Branches other than `develop` and `master` must follow this convention.
+
+On `develop` or `master`, the script asks for the issue number because those
+branch names do not identify one. Both `4` and `#4` are accepted when prompted.
 
 ## Commit format
 
@@ -72,7 +84,8 @@ Supported types are `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`,
 ## What the script does
 
 1. Validates Git, `jq`, the repository, and the selected AI CLI.
-2. Requests and validates the issue number.
+2. Extracts the issue number from the branch, or requests it on `develop` and
+   `master`.
 3. Reads only the staged files and staged diff.
 4. Rejects files that contain both staged and unstaged changes.
 5. Asks the AI provider to produce one logical commit or a small set of
@@ -118,3 +131,12 @@ does not perform hunk-level commit splitting.
 Run the command again or select another provider. The script rejects malformed
 JSON, unsupported commit types, missing files, duplicate file assignments, and
 files that were not staged.
+
+### The branch name is rejected
+
+Rename the branch so the issue number appears immediately after its first
+slash:
+
+```sh
+git branch -m feat/7-media-type
+```
