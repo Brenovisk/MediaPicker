@@ -1,0 +1,38 @@
+name: Delete Merged Branch
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+jobs:
+  delete-merged-branch:
+    name: Delete merged branch
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'develop' &&
+      github.event.pull_request.head.ref != 'master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete remote branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          branch_endpoint="repos/$REPOSITORY/git/ref/heads/$HEAD_BRANCH"
+          delete_endpoint="repos/$REPOSITORY/git/refs/heads/$HEAD_BRANCH"
+
+          if gh api "$branch_endpoint" --silent >/dev/null 2>&1; then
+            gh api "$delete_endpoint" --method DELETE --silent
+            echo "Deleted branch: $HEAD_BRANCH"
+          else
+            echo "Branch already deleted or unavailable: $HEAD_BRANCH"
+          fi
