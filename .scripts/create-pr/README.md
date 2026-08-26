@@ -25,13 +25,19 @@ Authenticate GitHub CLI when necessary:
 gh auth login
 ```
 
-## Setup
+## Install commands
 
-Make the script executable once:
+Install the repository command launchers once after cloning:
 
 ```sh
-chmod +x .scripts/create-pr/create-pr.sh
+./.scripts/install-commands.sh
 ```
+
+This creates `create-commit` and `create-pr` links in
+`${XDG_BIN_HOME:-$HOME/.local/bin}`. The installer does not replace an existing
+file or a command installed from another location.
+
+## Setup
 
 Run it from the repository root with a clean working tree. All intended changes
 must already be committed.
@@ -41,15 +47,15 @@ must already be committed.
 Choose the AI provider interactively:
 
 ```sh
-.scripts/create-pr/create-pr.sh
+create-pr
 ```
 
 Or provide it as the first argument:
 
 ```sh
-.scripts/create-pr/create-pr.sh codex
-.scripts/create-pr/create-pr.sh claude
-.scripts/create-pr/create-pr.sh gemini
+create-pr codex
+create-pr claude
+create-pr gemini
 ```
 
 ## Branch targeting
