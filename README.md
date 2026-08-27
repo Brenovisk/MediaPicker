@@ -1,12 +1,15 @@
 # MediaPicker
 
+[![Tests](https://github.com/Brenovisk/MediaPicker/actions/workflows/tests.yml/badge.svg?branch=develop)](https://github.com/Brenovisk/MediaPicker/actions/workflows/tests.yml?query=branch%3Adevelop)
+
 MediaPicker is a SwiftUI-first package for capturing photos and videos with the
 camera or selecting them from the photo library through one consistent API.
 
 > [!IMPORTANT]
 > MediaPicker is in early development. The package foundation is available, but
 > the camera, photo-library, and unified picker APIs described below are not yet
-> implemented. Follow the [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md) for progress.
+> implemented. Public API and behavior may change before `1.0.0`. Follow the
+> [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md) for progress.
 
 ## Goals for v0.0.1
 
@@ -102,9 +105,14 @@ current scaffold yet.
 Clone the repository and run the package checks from its root:
 
 ```sh
+./.scripts/lint.sh
 swift build
 swift test
 ```
+
+The lint command requires the SwiftLint version declared in
+`.swiftlint-version`. SwiftLint is used only for development and CI and is not a
+package dependency.
 
 The example application is located in [`Example`](Example). It consumes the
 local package and will be expanded as picker features are implemented.
@@ -113,8 +121,11 @@ To run package tests automatically before every push, install the repository's
 version-controlled Git hooks once:
 
 ```sh
-./Scripts/install-git-hooks.sh
+./.githooks/install-git-hooks.sh
 ```
+
+Naming, formatting, Swift 6 concurrency, testing, branch, commit, and pull
+request conventions are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project structure
 
@@ -131,6 +142,17 @@ MediaPicker/
 
 The detailed scope, milestones, dependencies, acceptance criteria, and release
 checklist are maintained in the [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md).
+The source-area responsibilities, dependency direction, access-control rules,
+and concurrency ownership are documented in [Architecture](Docs/Architecture.md).
+
+## Contributing and support
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Questions,
+bug reports, supported environments, and expected diagnostics are covered by
+the [support policy](SUPPORT.md).
+
+Suspected vulnerabilities must not be reported in a public issue. Use the
+private process described in the [security policy](SECURITY.md).
 
 ## License
 

@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct MediaPicker_ExampleApp: App {
+struct MediaPickerExampleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

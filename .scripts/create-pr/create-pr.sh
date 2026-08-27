@@ -34,10 +34,46 @@ cleanup() {
     "${PROMPT_FILE:-}" \
     "${AI_OUTPUT_FILE:-}" \
     "${AI_ERROR_FILE:-}" \
-    "${BODY_FILE:-}"
+    "${BODY_FILE:-}" \
+    "${RELATED_BODY_FILE:-}"
 }
 
 trap cleanup EXIT
+
+# ---------------------------------------------------------
+# Run repository checks first
+# ---------------------------------------------------------
+
+command_exists git ||
+  error "git is required."
+
+command_exists swift ||
+  error "Swift is required."
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+  error "This command must be executed inside a Git repository."
+
+REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
+LINT_SCRIPT="$REPOSITORY_ROOT/.scripts/lint.sh"
+
+[[ -x "$LINT_SCRIPT" ]] ||
+  error "$LINT_SCRIPT was not found or is not executable."
+
+info "Running SwiftLint..."
+
+if ! "$LINT_SCRIPT"; then
+  error "SwiftLint failed. Pull Request creation was stopped."
+fi
+
+success "SwiftLint passed."
+
+info "Running package tests..."
+
+if ! swift test --package-path "$REPOSITORY_ROOT"; then
+  error "Package tests failed. Pull Request creation was stopped."
+fi
+
+success "Package tests passed."
 
 # ---------------------------------------------------------
 # AI provider
@@ -138,9 +174,6 @@ generate_pr_with_ai() {
 # Validate base dependencies
 # ---------------------------------------------------------
 
-command_exists git ||
-  error "git is required."
-
 command_exists gh ||
   error "GitHub CLI (gh) is required."
 
@@ -159,9 +192,6 @@ validate_ai_provider
 # Resolve repository
 # ---------------------------------------------------------
 
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
-  error "This command must be executed inside a Git repository."
-
 # ---------------------------------------------------------
 # Resolve branches
 # ---------------------------------------------------------
@@ -177,8 +207,24 @@ fi
 
 if [[ "$CURRENT_BRANCH" == "develop" ]]; then
   BASE_BRANCH="master"
+  ISSUE_NUMBER=""
 else
   BASE_BRANCH="develop"
+
+  if [[ "$CURRENT_BRANCH" =~ ^[^/]+/([0-9]+)([-/].*)?$ ]]; then
+    ISSUE_NUMBER="${BASH_REMATCH[1]}"
+  else
+    error "Branch must follow the format type/issue-description (example: feat/7-media-type)."
+  fi
+
+  gh issue view "$ISSUE_NUMBER" >/dev/null 2>&1 ||
+    error "Issue #$ISSUE_NUMBER was not found or is not accessible."
+fi
+
+if [[ -n "$ISSUE_NUMBER" ]]; then
+  RELATED_ISSUE_CONTEXT="Related issue: #$ISSUE_NUMBER"
+else
+  RELATED_ISSUE_CONTEXT="None"
 fi
 
 # ---------------------------------------------------------
@@ -281,7 +327,7 @@ fi
 # Load PR template
 # ---------------------------------------------------------
 
-TEMPLATE_FILE=".github/pull-request-template.md"
+TEMPLATE_FILE=".github/PULL_REQUEST_TEMPLATE.md"
 
 [[ -f "$TEMPLATE_FILE" ]] ||
   error "$TEMPLATE_FILE was not found."
@@ -296,6 +342,7 @@ PROMPT_FILE=$(mktemp)
 AI_OUTPUT_FILE=$(mktemp)
 AI_ERROR_FILE=$(mktemp)
 BODY_FILE=$(mktemp)
+RELATED_BODY_FILE=$(mktemp)
 
 # ---------------------------------------------------------
 # Create AI prompt
@@ -360,8 +407,8 @@ build
 
 None
 
-14. If no related issue can be determined from the supplied information,
-leave the Related Issues section empty.
+14. Use the RELATED ISSUE context supplied below. When it is "None", leave the
+Related Issues section empty. Otherwise include its exact value in that section.
 
 15. Do not include Markdown code fences around the final output.
 
@@ -396,6 +443,12 @@ $CURRENT_BRANCH
 
 Target branch:
 $BASE_BRANCH
+
+============================================================
+RELATED ISSUE
+============================================================
+
+$RELATED_ISSUE_CONTEXT
 
 ============================================================
 COMMITS
@@ -504,6 +557,36 @@ awk '
 
 [[ -s "$BODY_FILE" ]] ||
   error "AI did not generate a valid PR description."
+
+# ---------------------------------------------------------
+# Associate related issue
+# ---------------------------------------------------------
+
+if [[ -n "$ISSUE_NUMBER" ]]; then
+  grep -qx -- "## Related Issues" "$BODY_FILE" ||
+    error "Generated PR description is missing the Related Issues section."
+
+  awk -v issue_number="$ISSUE_NUMBER" '
+    /^## Related Issues[[:space:]]*$/ {
+      print
+      print ""
+      print "Related issue: #" issue_number
+      replacing=1
+      next
+    }
+
+    replacing && /^## / {
+      print ""
+      replacing=0
+    }
+
+    !replacing {
+      print
+    }
+  ' "$BODY_FILE" > "$RELATED_BODY_FILE"
+
+  mv "$RELATED_BODY_FILE" "$BODY_FILE"
+fi
 
 # ---------------------------------------------------------
 # Validate title length
