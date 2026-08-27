@@ -5,8 +5,8 @@
 //  Created by Breno Souza on 24/08/26.
 //
 
-import SwiftUI
 import MediaPicker
+import SwiftUI
 
 struct ContentView: View {
     var body: some View {

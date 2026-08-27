@@ -3,7 +3,7 @@
 
 public struct MediaPicker {
     public init() {}
-    
+
     public func hello() -> String {
         return "Olá do meu SPM Framework!"
     }

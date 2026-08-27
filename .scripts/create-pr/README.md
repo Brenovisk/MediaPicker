@@ -1,10 +1,10 @@
 # Create Pull Request
 
-Validates the package, synchronizes the current branch, generates a Pull Request
-title and description with an AI provider, and creates the Pull Request through
-the GitHub CLI.
+Runs SwiftLint, validates the package, synchronizes the current branch,
+generates a Pull Request title and description with an AI provider, and creates
+the Pull Request through the GitHub CLI.
 
-The generated description follows `.github/pull-request-template.md` and is
+The generated description follows `.github/PULL_REQUEST_TEMPLATE.md` and is
 shown for review before the Pull Request is created.
 
 ## Requirements
@@ -91,8 +91,8 @@ Release Pull Requests from `develop` to `master` do not require an issue number.
 
 ## What the script does
 
-1. Runs `swift test` before any Pull Request preparation.
-2. Stops if the package does not compile or any test fails.
+1. Runs the pinned SwiftLint configuration before any Pull Request preparation.
+2. Runs `swift test` and stops if linting, compilation, or any test fails.
 3. Validates Git, GitHub CLI authentication, and the selected AI CLI.
 4. Resolves the current branch, base branch, and related issue number.
 5. Validates that the related issue exists for branches targeting `develop`.

@@ -1,0 +1,49 @@
+included:
+  - Sources
+  - Tests
+  - Example/MediaPickerExample
+
+excluded:
+  - .build
+  - .swiftpm
+
+opt_in_rules:
+  - closure_spacing
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - modifier_order
+  - sorted_imports
+  - unowned_variable_capture
+  - vertical_parameter_alignment_on_call
+
+force_cast: error
+force_try: error
+force_unwrapping: error
+
+line_length:
+  warning: 100
+  error: 120
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 250
+  error: 400
+
+file_length:
+  warning: 400
+  error: 600
+
+function_body_length:
+  warning: 40
+  error: 70
+
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+
+reporter: xcode

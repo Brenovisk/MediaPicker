@@ -1,8 +1,9 @@
 # Create Commit
 
-Creates one or more focused Git commits from the changes currently staged in
-the repository. An AI provider analyzes the staged diff, proposes a commit plan,
-and generates messages that follow the project's issue-based convention.
+Runs SwiftLint, then creates one or more focused Git commits from the changes
+currently staged in the repository. An AI provider analyzes the staged diff,
+proposes a commit plan, and generates messages that follow the project's
+issue-based convention.
 
 The script always shows the complete plan and asks for confirmation before it
 creates any commit.
@@ -89,8 +90,10 @@ Supported types are `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`,
 
 ## What the script does
 
-1. Validates Git, `jq`, the repository, and the selected AI CLI.
-2. Extracts the issue number from the branch, or requests it on `develop` and
+1. Validates Git, `jq`, and the repository, then runs the pinned SwiftLint
+   configuration and stops if linting fails.
+2. Validates the selected AI CLI and extracts the issue number from the branch,
+   or requests it on `develop` and
    `master`.
 3. Reads only the staged files and staged diff.
 4. Rejects files that contain both staged and unstaged changes.

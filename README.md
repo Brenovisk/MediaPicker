@@ -104,9 +104,14 @@ current scaffold yet.
 Clone the repository and run the package checks from its root:
 
 ```sh
+./.scripts/lint.sh
 swift build
 swift test
 ```
+
+The lint command requires the SwiftLint version declared in
+`.swiftlint-version`. SwiftLint is used only for development and CI and is not a
+package dependency.
 
 The example application is located in [`Example`](Example). It consumes the
 local package and will be expanded as picker features are implemented.
@@ -117,6 +122,9 @@ version-controlled Git hooks once:
 ```sh
 ./.githooks/install-git-hooks.sh
 ```
+
+Naming, formatting, Swift 6 concurrency, testing, branch, commit, and pull
+request conventions are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Project structure
 

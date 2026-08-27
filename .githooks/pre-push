@@ -13,6 +13,9 @@ else
     exit 1
 fi
 
+echo "Running SwiftLint before push..."
+"$repository_root/.scripts/lint.sh"
+
 echo "Running MediaPicker package tests before push..."
 cd "$package_directory"
 
