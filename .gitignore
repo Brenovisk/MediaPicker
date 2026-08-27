@@ -4,14 +4,21 @@
 
 ## User settings
 xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+
+## Build and local Xcode state
+DerivedData/
+*.xcarchive
+*.dSYM
+*.dSYM.zip
+*.ipa
+.xcode.env.local
 
 ## Obj-C/Swift specific
 *.hmap
-
-## App packaging
-*.ipa
-*.dSYM.zip
-*.dSYM
 
 ## Playgrounds
 timeline.xctimeline
@@ -31,10 +38,14 @@ playground.xcworkspace
 
 .build/
 .swiftpm/
+Package.resolved
 
 # macOS and local editors
 .DS_Store
 .vscode/
+*.swp
+*.swo
+*~
 
 # CocoaPods
 #
