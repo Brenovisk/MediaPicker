@@ -1,5 +1,5 @@
-import Testing
 @testable import MediaPicker
+import Testing
 
 struct MediaPickerTests {
     @Test func mediaPickerReturnsGreeting() {

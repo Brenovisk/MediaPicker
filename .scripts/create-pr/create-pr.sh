@@ -41,15 +41,35 @@ cleanup() {
 trap cleanup EXIT
 
 # ---------------------------------------------------------
-# Run package tests first
+# Run repository checks first
 # ---------------------------------------------------------
+
+command_exists git ||
+  error "git is required."
 
 command_exists swift ||
   error "Swift is required."
 
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+  error "This command must be executed inside a Git repository."
+
+REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
+LINT_SCRIPT="$REPOSITORY_ROOT/.scripts/lint.sh"
+
+[[ -x "$LINT_SCRIPT" ]] ||
+  error "$LINT_SCRIPT was not found or is not executable."
+
+info "Running SwiftLint..."
+
+if ! "$LINT_SCRIPT"; then
+  error "SwiftLint failed. Pull Request creation was stopped."
+fi
+
+success "SwiftLint passed."
+
 info "Running package tests..."
 
-if ! swift test; then
+if ! swift test --package-path "$REPOSITORY_ROOT"; then
   error "Package tests failed. Pull Request creation was stopped."
 fi
 
@@ -154,9 +174,6 @@ generate_pr_with_ai() {
 # Validate base dependencies
 # ---------------------------------------------------------
 
-command_exists git ||
-  error "git is required."
-
 command_exists gh ||
   error "GitHub CLI (gh) is required."
 
@@ -174,9 +191,6 @@ validate_ai_provider
 # ---------------------------------------------------------
 # Resolve repository
 # ---------------------------------------------------------
-
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
-  error "This command must be executed inside a Git repository."
 
 # ---------------------------------------------------------
 # Resolve branches
@@ -313,7 +327,7 @@ fi
 # Load PR template
 # ---------------------------------------------------------
 
-TEMPLATE_FILE=".github/pull-request-template.md"
+TEMPLATE_FILE=".github/PULL_REQUEST_TEMPLATE.md"
 
 [[ -f "$TEMPLATE_FILE" ]] ||
   error "$TEMPLATE_FILE was not found."

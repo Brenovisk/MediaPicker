@@ -151,6 +151,20 @@ command_exists jq ||
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
   error "This command must be executed inside a Git repository."
 
+REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
+LINT_SCRIPT="$REPOSITORY_ROOT/.scripts/lint.sh"
+
+[[ -x "$LINT_SCRIPT" ]] ||
+  error "$LINT_SCRIPT was not found or is not executable."
+
+info "Running SwiftLint..."
+
+if ! "$LINT_SCRIPT"; then
+  error "SwiftLint failed. Commit creation was stopped."
+fi
+
+success "SwiftLint passed."
+
 # ---------------------------------------------------------
 # Select AI Provider
 # ---------------------------------------------------------
