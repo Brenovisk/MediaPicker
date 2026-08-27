@@ -8,7 +8,8 @@ camera or selecting them from the photo library through one consistent API.
 > [!IMPORTANT]
 > MediaPicker is in early development. The package foundation is available, but
 > the camera, photo-library, and unified picker APIs described below are not yet
-> implemented. Follow the [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md) for progress.
+> implemented. Public API and behavior may change before `1.0.0`. Follow the
+> [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md) for progress.
 
 ## Goals for v0.0.1
 
@@ -143,6 +144,15 @@ The detailed scope, milestones, dependencies, acceptance criteria, and release
 checklist are maintained in the [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md).
 The source-area responsibilities, dependency direction, access-control rules,
 and concurrency ownership are documented in [Architecture](Docs/Architecture.md).
+
+## Contributing and support
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Questions,
+bug reports, supported environments, and expected diagnostics are covered by
+the [support policy](SUPPORT.md).
+
+Suspected vulnerabilities must not be reported in a public issue. Use the
+private process described in the [security policy](SECURITY.md).
 
 ## License
 
