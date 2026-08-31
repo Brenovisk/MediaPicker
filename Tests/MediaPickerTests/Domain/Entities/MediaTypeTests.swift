@@ -39,6 +39,11 @@ struct MediaTypeTests {
         requireSendable(MediaType.photoAndVideo)
     }
 
-    private func requireSendable<T: Sendable>(_: T) {}
+}
 
+//MARK: Helper Methods
+extension MediaTypeTests {
+    
+    private func requireSendable<T: Sendable>(_: T) {}
+    
 }

@@ -50,6 +50,11 @@ struct MediaSourceTests {
         requireSendable(MediaSource.cameraAndPhotoLibrary)
     }
 
-    private func requireSendable<T: Sendable>(_: T) {}
+}
 
+//MARK: Helper Methods
+extension MediaSourceTests {
+    
+    private func requireSendable<T: Sendable>(_: T) {}
+    
 }
