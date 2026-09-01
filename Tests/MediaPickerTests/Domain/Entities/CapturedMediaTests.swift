@@ -51,9 +51,9 @@ struct CapturedMediaTests {
 
 }
 
-//MARK: Helper Methods
+// MARK: Helper Methods
 extension CapturedMediaTests {
-    
+
     private func makeCapturedMedia(
         id: UUID = UUID(),
         mediaType: MediaType = .photo,
@@ -69,5 +69,5 @@ extension CapturedMediaTests {
     }
 
     private func requireSendable<T: Sendable>(_: T) {}
-    
+
 }

@@ -19,5 +19,11 @@ public struct MediaType: OptionSet, Sendable, Hashable {
     public static let photo = MediaType(rawValue: 1)
     public static let video = MediaType(rawValue: 2)
     public static let photoAndVideo: MediaType = [.photo, .video]
+    
+    public func isSupported(
+        given availableSources: MediaType
+    ) -> Bool {
+        isSubset(of: availableSources)
+    }
 
 }
