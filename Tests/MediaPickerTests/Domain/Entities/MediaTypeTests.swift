@@ -41,9 +41,9 @@ struct MediaTypeTests {
 
 }
 
-//MARK: Helper Methods
+// MARK: Helper Methods
 extension MediaTypeTests {
-    
+
     private func requireSendable<T: Sendable>(_: T) {}
-    
+
 }

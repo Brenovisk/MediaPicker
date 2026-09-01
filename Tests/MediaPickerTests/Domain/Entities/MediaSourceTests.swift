@@ -52,9 +52,9 @@ struct MediaSourceTests {
 
 }
 
-//MARK: Helper Methods
+// MARK: Helper Methods
 extension MediaSourceTests {
-    
+
     private func requireSendable<T: Sendable>(_: T) {}
-    
+
 }
