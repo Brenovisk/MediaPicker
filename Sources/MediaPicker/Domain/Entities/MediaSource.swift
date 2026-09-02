@@ -17,8 +17,10 @@ public struct MediaSource: OptionSet, Sendable, Hashable {
         self.rawValue = rawValue
     }
 
-    public static let camera = MediaSource(rawValue: 1)
-    public static let photoLibrary = MediaSource(rawValue: 2)
+    public static let camera = MediaSource(rawValue: MediaPickerConstants.RawValue.camera)
+    public static let photoLibrary = MediaSource(
+        rawValue: MediaPickerConstants.RawValue.photoLibrary
+    )
     public static let cameraAndPhotoLibrary: MediaSource = [.camera, .photoLibrary]
 
     /**

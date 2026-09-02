@@ -47,34 +47,34 @@ extension MediaPickerError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .sourceUnavailable(sources):
-            "The requested \(Self.description(for: sources)) is unavailable on this device."
+            MediaPickerConstants.Text.sourceUnavailable(Self.description(for: sources)).value
         case let .permissionDenied(permission):
-            "Permission to access \(permission.description) was denied."
+            MediaPickerConstants.Text.permissionDenied(permission.description).value
         case let .invalidConfiguration(reason):
-            "The MediaPicker configuration is invalid: \(reason)"
+            MediaPickerConstants.Text.invalidConfiguration(reason).value
         case .photoCaptureFailed:
-            "MediaPicker could not capture the photo."
+            MediaPickerConstants.Text.photoCaptureFailed.value
         case .videoRecordingFailed:
-            "MediaPicker could not record the video."
+            MediaPickerConstants.Text.videoRecordingFailed.value
         case .photoLibraryLoadingFailed:
-            "MediaPicker could not load the selected photo-library item."
+            MediaPickerConstants.Text.photoLibraryLoadingFailed.value
         case .unsupportedFormat:
-            "The selected media format is not supported."
+            MediaPickerConstants.Text.unsupportedFormat.value
         case .unknown:
-            "MediaPicker encountered an unexpected error."
+            MediaPickerConstants.Text.unknownFailure.value
         }
     }
 
     private static func description(for sources: MediaSource) -> String {
         switch sources {
         case .camera:
-            "camera"
+            MediaPickerConstants.Text.camera.value
         case .photoLibrary:
-            "photo library"
+            MediaPickerConstants.Text.photoLibrary.value
         case .cameraAndPhotoLibrary:
-            "camera and photo library"
+            MediaPickerConstants.Text.cameraAndPhotoLibrary.value
         default:
-            "media source"
+            MediaPickerConstants.Text.mediaSource.value
         }
     }
 }
@@ -84,12 +84,12 @@ private extension MediaPickerError.Permission {
     var description: String {
         switch self {
         case .camera:
-            "the camera"
+            MediaPickerConstants.Text.cameraPermission.value
         case .microphone:
-            "the microphone"
+            MediaPickerConstants.Text.microphonePermission.value
         case .photoLibrary:
-            "the photo library"
+            MediaPickerConstants.Text.photoLibraryPermission.value
         }
     }
-    
+
 }

@@ -16,8 +16,8 @@ public struct MediaType: OptionSet, Sendable, Hashable {
         self.rawValue = rawValue
     }
 
-    public static let photo = MediaType(rawValue: 1)
-    public static let video = MediaType(rawValue: 2)
+    public static let photo = MediaType(rawValue: MediaPickerConstants.RawValue.photo)
+    public static let video = MediaType(rawValue: MediaPickerConstants.RawValue.video)
     public static let photoAndVideo: MediaType = [.photo, .video]
 
     public func isSupported(
