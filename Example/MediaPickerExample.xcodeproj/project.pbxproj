@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4BBD5ACC303D008E00D0A280 /* MediaPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 4BBD5ACB303D008E00D0A280 /* MediaPicker */; };
+		1455B51D3048E25B003B0799 /* MediaPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 1455B51C3048E25B003B0799 /* MediaPicker */; };
+		1455B5283048EA30003B0799 /* MediaPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 1455B5273048EA30003B0799 /* MediaPicker */; };
+		1455B52A3048EA6D003B0799 /* MediaPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 1455B5293048EA6D003B0799 /* MediaPicker */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,7 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4BBD5ACC303D008E00D0A280 /* MediaPicker in Frameworks */,
+				1455B51D3048E25B003B0799 /* MediaPicker in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -54,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1455B5283048EA30003B0799 /* MediaPicker in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,16 +64,25 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1455B52A3048EA6D003B0799 /* MediaPicker in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1455B5263048EA30003B0799 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		4BB5DE13303CBDAD004EE275 = {
 			isa = PBXGroup;
 			children = (
 				4BB5DE1E303CBDAD004EE275 /* MediaPickerExample */,
+				1455B5263048EA30003B0799 /* Frameworks */,
 				4BB5DE1D303CBDAD004EE275 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -105,7 +117,7 @@
 			);
 			name = "MediaPicker-Example";
 			packageProductDependencies = (
-				4BBD5ACB303D008E00D0A280 /* MediaPicker */,
+				1455B51C3048E25B003B0799 /* MediaPicker */,
 			);
 			productName = "MediaPicker-Example";
 			productReference = 4BB5DE1C303CBDAD004EE275 /* MediaPicker-Example.app */;
@@ -126,6 +138,7 @@
 			);
 			name = "MediaPicker-ExampleTests";
 			packageProductDependencies = (
+				1455B5273048EA30003B0799 /* MediaPicker */,
 			);
 			productName = "MediaPicker-ExampleTests";
 			productReference = 4BB5DE29303CBDB0004EE275 /* MediaPicker-ExampleTests.xctest */;
@@ -146,6 +159,7 @@
 			);
 			name = "MediaPicker-ExampleUITests";
 			packageProductDependencies = (
+				1455B5293048EA6D003B0799 /* MediaPicker */,
 			);
 			productName = "MediaPicker-ExampleUITests";
 			productReference = 4BB5DE33303CBDB0004EE275 /* MediaPicker-ExampleUITests.xctest */;
@@ -174,7 +188,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 4BB5DE17303CBDAD004EE275 /* Build configuration list for PBXProject "MediaPicker-Example" */;
+			buildConfigurationList = 4BB5DE17303CBDAD004EE275 /* Build configuration list for PBXProject "MediaPickerExample" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -184,7 +198,7 @@
 			mainGroup = 4BB5DE13303CBDAD004EE275;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				4BBD5ACA303D008E00D0A280 /* XCLocalSwiftPackageReference ".." */,
+				1455B51B3048E25B003B0799 /* XCLocalSwiftPackageReference "../../MediaPicker" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4BB5DE1D303CBDAD004EE275 /* Products */;
@@ -388,9 +402,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MediaPicker needs camera access to capture photos and videos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MediaPicker needs microphone access to record videos with audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -420,9 +436,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "MediaPicker needs camera access to capture photos and videos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MediaPicker needs microphone access to record videos with audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -451,7 +469,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
@@ -473,7 +491,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
@@ -494,7 +512,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "brenosouza.MediaPicker-ExampleUITests";
@@ -514,7 +532,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L9YFZB7NX4;
+				DEVELOPMENT_TEAM = QLU3R732N5;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "brenosouza.MediaPicker-ExampleUITests";
@@ -532,7 +550,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4BB5DE17303CBDAD004EE275 /* Build configuration list for PBXProject "MediaPicker-Example" */ = {
+		4BB5DE17303CBDAD004EE275 /* Build configuration list for PBXProject "MediaPickerExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4BB5DE3B303CBDB0004EE275 /* Debug */,
@@ -571,15 +589,25 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		4BBD5ACA303D008E00D0A280 /* XCLocalSwiftPackageReference ".." */ = {
+		1455B51B3048E25B003B0799 /* XCLocalSwiftPackageReference "../../MediaPicker" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ..;
+			relativePath = ../../MediaPicker;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		4BBD5ACB303D008E00D0A280 /* MediaPicker */ = {
+		1455B51C3048E25B003B0799 /* MediaPicker */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = MediaPicker;
+		};
+		1455B5273048EA30003B0799 /* MediaPicker */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1455B51B3048E25B003B0799 /* XCLocalSwiftPackageReference "../../MediaPicker" */;
+			productName = MediaPicker;
+		};
+		1455B5293048EA6D003B0799 /* MediaPicker */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1455B51B3048E25B003B0799 /* XCLocalSwiftPackageReference "../../MediaPicker" */;
 			productName = MediaPicker;
 		};
 /* End XCSwiftPackageProductDependency section */
