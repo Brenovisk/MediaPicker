@@ -93,6 +93,20 @@ struct MediaPickerConfigurationValidationTests {
         }
     }
 
+    @Test func unavailablePhotoLibraryIsADynamicAvailabilityError() throws {
+        let configuration = try MediaPickerConfiguration(
+            sources: .photoLibrary,
+            mediaTypes: .photo
+        )
+
+        #expect(throws: MediaPickerError.sourceUnavailable(.photoLibrary)) {
+            try configuration.validateAvailability(
+                availableSources: .camera,
+                supportedMediaTypes: .photoAndVideo
+            )
+        }
+    }
+
     @Test func unsupportedVideoIsADynamicCapabilityError() throws {
         let configuration = try MediaPickerConfiguration(
             sources: .camera,

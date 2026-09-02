@@ -35,6 +35,11 @@ struct MediaTypeTests {
         #expect(MediaType.photo.isDisjoint(with: .video))
     }
 
+    @Test func requestedMediaTypesCanBeCheckedAgainstSupportedTypes() {
+        #expect(MediaType.photo.isSupported(given: .photoAndVideo))
+        #expect(!MediaType.photoAndVideo.isSupported(given: .photo))
+    }
+
     @Test func mediaTypeIsSendable() {
         requireSendable(MediaType.photoAndVideo)
     }
