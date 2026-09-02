@@ -45,6 +45,20 @@ struct CapturedMediaTests {
         #expect(firstResult == secondResult)
     }
 
+    @Test func resultsWithDifferentContentAreNotEqual() {
+        let id = UUID()
+        let firstResult = makeCapturedMedia(
+            id: id,
+            contentURL: URL(fileURLWithPath: "/tmp/first-photo.jpg")
+        )
+        let secondResult = makeCapturedMedia(
+            id: id,
+            contentURL: URL(fileURLWithPath: "/tmp/second-photo.jpg")
+        )
+
+        #expect(firstResult != secondResult)
+    }
+
     @Test func capturedMediaIsSendable() {
         requireSendable(makeCapturedMedia())
     }

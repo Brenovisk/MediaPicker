@@ -42,6 +42,25 @@ struct MediaPickerConfigurationTests {
         #expect(configuration.maximumVideoDuration == 30)
     }
 
+    @Test func configurationsWithTheSameValuesAreEqual() throws {
+        let firstConfiguration = try makeConfiguration()
+        let secondConfiguration = try makeConfiguration()
+
+        #expect(firstConfiguration == secondConfiguration)
+    }
+
+    @Test func configurationsWithDifferentValuesAreNotEqual() throws {
+        let firstConfiguration = try makeConfiguration()
+        let secondConfiguration = try MediaPickerConfiguration(
+            sources: .camera,
+            mediaTypes: .video,
+            initialCameraPosition: .front,
+            maximumVideoDuration: 60
+        )
+
+        #expect(firstConfiguration != secondConfiguration)
+    }
+
     @Test func configurationIsSendable() {
         requireSendable(MediaPickerConfiguration())
     }
@@ -50,6 +69,15 @@ struct MediaPickerConfigurationTests {
 
 // MARK: Helper Methods
 extension MediaPickerConfigurationTests {
+
+    private func makeConfiguration() throws -> MediaPickerConfiguration {
+        try MediaPickerConfiguration(
+            sources: .camera,
+            mediaTypes: .video,
+            initialCameraPosition: .front,
+            maximumVideoDuration: 30
+        )
+    }
 
     private func requireSendable<T: Sendable>(_: T) {}
 
