@@ -52,9 +52,9 @@ public struct MediaPickerConfiguration: Sendable, Equatable {
 
 }
 
-//MARK: Helper Methods
+// MARK: Helper Methods
 extension MediaPickerConfiguration {
-    
+
     private static func isRecognized(_ sources: MediaSource) -> Bool {
         !sources.isEmpty && sources.isSupported(given: .cameraAndPhotoLibrary)
     }
@@ -62,5 +62,5 @@ extension MediaPickerConfiguration {
     private static func isRecognized(_ mediaTypes: MediaType) -> Bool {
         !mediaTypes.isEmpty && mediaTypes.isSupported(given: .photoAndVideo)
     }
-    
+
 }
