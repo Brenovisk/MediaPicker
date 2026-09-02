@@ -35,6 +35,10 @@ install_command \
   "create-pr" \
   "$repository_root/.scripts/create-pr/create-pr.sh"
 
+install_command \
+  "clean-gone-branches" \
+  "$repository_root/.scripts/clean-gone-branches.sh"
+
 case ":$PATH:" in
   *":$install_directory:"*)
     ;;

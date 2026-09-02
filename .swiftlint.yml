@@ -46,4 +46,26 @@ cyclomatic_complexity:
   warning: 10
   error: 15
 
+custom_rules:
+  struct_opening_blank_line:
+    name: Struct Opening Blank Line
+    regex: '(?m)^[ \t]*(?:(?:public|internal|package|private|fileprivate)[ \t]+)*struct[ \t]+[^\n{]+\{[ \t]*\n(?![ \t]*\n)'
+    message: Add an empty line immediately after the opening brace of a struct.
+    severity: warning
+  struct_closing_blank_line:
+    name: Struct Closing Blank Line
+    regex: '(?ms)^([ \t]*)(?:(?:public|internal|package|private|fileprivate)[ \t]+)*struct[ \t]+[^\n{]+\{(?:(?!^\1\}).)*\n[ \t]*\S[^\n]*\n\1\}'
+    message: Add an empty line immediately before the closing brace of a struct.
+    severity: warning
+  class_opening_blank_line:
+    name: Class Opening Blank Line
+    regex: '(?m)^[ \t]*(?:(?:public|internal|package|private|fileprivate|open|final)[ \t]+)*class[ \t]+[^\n{]+\{[ \t]*\n(?![ \t]*\n)'
+    message: Add an empty line immediately after the opening brace of a class.
+    severity: warning
+  class_closing_blank_line:
+    name: Class Closing Blank Line
+    regex: '(?ms)^([ \t]*)(?:(?:public|internal|package|private|fileprivate|open|final)[ \t]+)*class[ \t]+[^\n{]+\{(?:(?!^\1\}).)*\n[ \t]*\S[^\n]*\n\1\}'
+    message: Add an empty line immediately before the closing brace of a class.
+    severity: warning
+
 reporter: xcode
