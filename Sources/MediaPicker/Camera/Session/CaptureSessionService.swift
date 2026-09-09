@@ -1,42 +1,4 @@
-import AVFoundation
 import Dispatch
-
-/** Injectable session commands used to test the actor without real hardware. */
-struct CaptureSessionOperations: Sendable {
-
-    let startRunning: @Sendable () throws -> Void
-    let stopRunning: @Sendable () throws -> Void
-
-    static var live: CaptureSessionOperations {
-        let storage = CaptureSessionStorage()
-
-        return CaptureSessionOperations(
-            startRunning: storage.startRunning,
-            stopRunning: storage.stopRunning
-        )
-    }
-
-}
-
-/**
- The only type that owns and directly mutates `AVCaptureSession`.
-
- This type is private to this file, and its operations are executed exclusively
- by `CaptureSessionService` on the dedicated serial executor.
-*/
-private final class CaptureSessionStorage: @unchecked Sendable {
-
-    private let session = AVCaptureSession()
-
-    func startRunning() {
-        session.startRunning()
-    }
-
-    func stopRunning() {
-        session.stopRunning()
-    }
-
-}
 
 /**
  Serializes all mutable capture-session work away from the main thread.
@@ -52,6 +14,7 @@ actor CaptureSessionService {
 
     nonisolated private let executor: DispatchSerialQueue
     private let operations: CaptureSessionOperations
+    private var configuredPosition: CameraPosition?
 
     nonisolated var unownedExecutor: UnownedSerialExecutor {
         executor.asUnownedSerialExecutor()
@@ -62,6 +25,23 @@ actor CaptureSessionService {
             label: MediaPickerInfrastructureConstants.captureSessionQueueLabel
         )
         self.operations = operations
+    }
+
+    func configure(for position: CameraPosition) throws {
+        guard configuredPosition != position else { return }
+
+        guard configuredPosition == nil else {
+            throw MediaPickerError.captureSessionConfigurationFailed
+        }
+
+        do {
+            try operations.configure(position)
+            configuredPosition = position
+        } catch let error as MediaPickerError {
+            throw error
+        } catch {
+            throw MediaPickerError.captureSessionConfigurationFailed
+        }
     }
 
     func startRunning() throws {

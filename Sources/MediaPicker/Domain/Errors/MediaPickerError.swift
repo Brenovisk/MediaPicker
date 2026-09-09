@@ -35,6 +35,9 @@ public enum MediaPickerError: Error, Sendable, Equatable, Hashable {
     /// Starting the underlying camera capture session failed.
     case captureSessionStartFailed
 
+    /// Configuring the camera session preset or video input failed.
+    case captureSessionConfigurationFailed
+
     /// Stopping the underlying camera capture session failed.
     case captureSessionStopFailed
 
@@ -64,6 +67,8 @@ extension MediaPickerError: LocalizedError {
             MediaPickerConstants.Text.videoRecordingFailed.value
         case .captureSessionStartFailed:
             MediaPickerConstants.Text.captureSessionStartFailed.value
+        case .captureSessionConfigurationFailed:
+            MediaPickerConstants.Text.captureSessionConfigurationFailed.value
         case .captureSessionStopFailed:
             MediaPickerConstants.Text.captureSessionStopFailed.value
         case .photoLibraryLoadingFailed:
