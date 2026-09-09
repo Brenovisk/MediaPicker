@@ -7,6 +7,8 @@ enum MediaPickerConstants {
 
         case photoCaptureFailed
         case videoRecordingFailed
+        case captureSessionStartFailed
+        case captureSessionStopFailed
         case photoLibraryLoadingFailed
         case unsupportedFormat
         case unknownFailure
@@ -55,6 +57,10 @@ extension MediaPickerConstants.Text {
             return "MediaPicker could not capture the photo."
         case .videoRecordingFailed:
             return "MediaPicker could not record the video."
+        case .captureSessionStartFailed:
+            return "MediaPicker could not start the camera session."
+        case .captureSessionStopFailed:
+            return "MediaPicker could not stop the camera session."
         case .photoLibraryLoadingFailed:
             return "MediaPicker could not load the selected photo-library item."
         case .unsupportedFormat:
