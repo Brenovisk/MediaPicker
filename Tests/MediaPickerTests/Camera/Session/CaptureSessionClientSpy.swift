@@ -20,6 +20,8 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private var activeOperations = 0
     private(set) var maximumConcurrentOperations = 0
     private(set) var didRunOnMainThread = false
+    private(set) var configureCount = 0
+    private(set) var configuredPositions: [CameraPosition] = []
     private(set) var startCount = 0
     private(set) var stopCount = 0
 
@@ -33,9 +35,17 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
 
     var operations: CaptureSessionOperations {
         CaptureSessionOperations(
+            configure: configure,
             startRunning: startRunning,
             stopRunning: stopRunning
         )
+    }
+
+    func configure(for position: CameraPosition) throws {
+        try performOperation {
+            configureCount += 1
+            configuredPositions.append(position)
+        }
     }
 
     func startRunning() throws {
