@@ -11,6 +11,8 @@ struct MediaPickerErrorTests {
             .invalidConfiguration("No media source was enabled."),
             .photoCaptureFailed,
             .videoRecordingFailed,
+            .captureSessionStartFailed,
+            .captureSessionStopFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown
@@ -26,6 +28,8 @@ struct MediaPickerErrorTests {
             .invalidConfiguration("No media type was enabled."),
             .photoCaptureFailed,
             .videoRecordingFailed,
+            .captureSessionStartFailed,
+            .captureSessionStopFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown
