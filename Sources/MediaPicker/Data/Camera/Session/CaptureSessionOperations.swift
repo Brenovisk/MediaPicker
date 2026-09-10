@@ -22,6 +22,8 @@ struct CaptureSessionOperations: Sendable {
     let stopRunning: @Sendable () throws -> Void
     let prepareCameraSwitch: @Sendable (CameraPosition) -> Void
     let switchCamera: @Sendable (CameraPosition) throws -> Void
+    let lightingCapabilities: @Sendable () -> CameraLightingCapabilities
+    let setTorchMode: @Sendable (CameraTorchMode) throws -> Void
 
     init(
         previewSession: CaptureSessionReference? = nil,
@@ -30,7 +32,11 @@ struct CaptureSessionOperations: Sendable {
         startRunning: @escaping @Sendable () throws -> Void,
         stopRunning: @escaping @Sendable () throws -> Void,
         prepareCameraSwitch: @escaping @Sendable (CameraPosition) -> Void,
-        switchCamera: @escaping @Sendable (CameraPosition) throws -> Void
+        switchCamera: @escaping @Sendable (CameraPosition) throws -> Void,
+        lightingCapabilities: @escaping @Sendable () -> CameraLightingCapabilities = {
+            .unavailable
+        },
+        setTorchMode: @escaping @Sendable (CameraTorchMode) throws -> Void = { _ in }
     ) {
         self.previewSession = previewSession
         self.configure = configure
@@ -39,6 +45,8 @@ struct CaptureSessionOperations: Sendable {
         self.stopRunning = stopRunning
         self.prepareCameraSwitch = prepareCameraSwitch
         self.switchCamera = switchCamera
+        self.lightingCapabilities = lightingCapabilities
+        self.setTorchMode = setTorchMode
     }
 
 }

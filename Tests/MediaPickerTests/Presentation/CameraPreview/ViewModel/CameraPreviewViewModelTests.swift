@@ -65,5 +65,28 @@ struct CameraPreviewViewModelTests {
         #expect(viewModel.privacyBlurRadius == .zero)
     }
 
+    @Test func cameraSwitchRefreshesCapabilitiesExposedToUI() async throws {
+        let backCapabilities = CameraLightingCapabilities(
+            flashModes: [.off, .on],
+            torchModes: [.off, .on]
+        )
+        let client = CaptureSessionClientSpy(
+            capabilities: [backCapabilities, .unavailable]
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: service)
+        )
+        try await viewModel.open()
+        #expect(viewModel.lightingCapabilities == backCapabilities)
+
+        try await viewModel.switchCamera()
+
+        #expect(viewModel.lightingCapabilities == .unavailable)
+        #expect(viewModel.lightingCapabilities.supportsFlash == false)
+        #expect(viewModel.lightingCapabilities.supportsTorch == false)
+    }
+
 }
 #endif

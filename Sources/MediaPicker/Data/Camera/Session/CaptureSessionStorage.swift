@@ -11,6 +11,7 @@ extension CaptureSessionOperations {
 
     static var live: CaptureSessionOperations {
         let previewSession = CaptureSessionReference()
+
         let storage = CaptureSessionStorage(
             session: previewSession.session,
             frameStore: previewSession.frameStore
@@ -23,7 +24,9 @@ extension CaptureSessionOperations {
             startRunning: storage.startRunning,
             stopRunning: storage.stopRunning,
             prepareCameraSwitch: storage.prepareCameraSwitch,
-            switchCamera: storage.switchCamera
+            switchCamera: storage.switchCamera,
+            lightingCapabilities: storage.lightingCapabilities,
+            setTorchMode: storage.setTorchMode
         )
     }
 
@@ -114,6 +117,33 @@ private final class CaptureSessionStorage: @unchecked Sendable {
         try replaceVideoInput(currentInput, with: newInput)
         videoInput = newInput
         configuredPosition = position
+    }
+
+    func lightingCapabilities() -> CameraLightingCapabilities {
+        guard let device = videoInput?.device else { return .unavailable }
+
+        let flashModes: [CameraFlashMode] = device.hasFlash ? CameraFlashMode.allCases : []
+        let torchModes = device.hasTorch
+            ? CameraTorchMode.allCases.filter {
+                device.isTorchModeSupported($0.captureMode)
+            }
+            : []
+
+        return CameraLightingCapabilities(
+            flashModes: flashModes,
+            torchModes: torchModes
+        )
+    }
+
+    func setTorchMode(_ mode: CameraTorchMode) throws {
+        guard let device = videoInput?.device,
+              device.isTorchModeSupported(mode.captureMode) else {
+            throw CaptureSessionConfigurationError.unsupportedTorchMode
+        }
+
+        try device.lockForConfiguration()
+        defer { device.unlockForConfiguration() }
+        device.torchMode = mode.captureMode
     }
 
 }
@@ -227,4 +257,20 @@ private enum CaptureSessionConfigurationError: Error {
     case cannotAddVideoInput
     case cannotAddVideoOutput
     case missingVideoInput
+    case unsupportedTorchMode
+}
+
+private extension CameraTorchMode {
+
+    var captureMode: AVCaptureDevice.TorchMode {
+        switch self {
+        case .off:
+            .off
+        case .on:
+            .on
+        case .auto:
+            .auto
+        }
+    }
+
 }

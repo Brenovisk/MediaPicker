@@ -21,9 +21,15 @@ actor CaptureSessionService: CameraSessionControlling {
 
     nonisolated private let executor: DispatchSerialQueue
     nonisolated let previewSession: CaptureSessionReference?
+
     private let operations: CaptureSessionOperations
     private var stateMachine = CameraStateMachine()
     private var configuredPosition: CameraPosition?
+
+    private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
+    private(set) var flashMode: CameraFlashMode = .off
+    private(set) var torchMode: CameraTorchMode = .off
+
     private var isPickerActive = false
     private var isSessionRunning = false
 
@@ -122,11 +128,33 @@ actor CaptureSessionService: CameraSessionControlling {
         do {
             try operations.switchCamera(newPosition)
             self.configuredPosition = newPosition
+            refreshLightingCapabilities()
             return newPosition
         } catch let error as MediaPickerError {
             throw error
         } catch {
             throw MediaPickerError.captureSessionSwitchFailed
+        }
+    }
+
+    func setFlashMode(_ mode: CameraFlashMode) throws {
+        guard lightingCapabilities.flashModes.contains(mode) else {
+            throw MediaPickerError.unsupportedFlashMode
+        }
+
+        flashMode = mode
+    }
+
+    func setTorchMode(_ mode: CameraTorchMode) throws {
+        guard lightingCapabilities.torchModes.contains(mode) else {
+            throw MediaPickerError.unsupportedTorchMode
+        }
+
+        do {
+            try operations.setTorchMode(mode)
+            torchMode = mode
+        } catch {
+            throw MediaPickerError.cameraDeviceConfigurationFailed
         }
     }
 
@@ -151,6 +179,9 @@ extension CaptureSessionService {
     private func resetSession() {
         operations.reset()
         configuredPosition = nil
+        lightingCapabilities = .unavailable
+        flashMode = .off
+        torchMode = .off
     }
 
     private func prepareSession(for position: CameraPosition) throws {
@@ -160,10 +191,23 @@ extension CaptureSessionService {
             try configure(for: position)
             try startSession()
             try stateMachine.handle(.preparationSucceeded)
+            refreshLightingCapabilities()
             operations.prepareCameraSwitch(position.opposite)
         } catch let error as MediaPickerError {
             try? stateMachine.handle(.fail(error))
             throw error
+        }
+    }
+
+    private func refreshLightingCapabilities() {
+        lightingCapabilities = operations.lightingCapabilities()
+
+        if lightingCapabilities.flashModes.contains(flashMode) == false {
+            flashMode = .off
+        }
+
+        if lightingCapabilities.torchModes.contains(torchMode) == false {
+            torchMode = .off
         }
     }
 
