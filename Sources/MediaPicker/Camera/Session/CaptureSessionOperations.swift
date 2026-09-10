@@ -15,9 +15,24 @@
 */
 struct CaptureSessionOperations: Sendable {
 
+    let previewSession: CaptureSessionReference?
     let configure: @Sendable (CameraPosition) throws -> Void
     let reset: @Sendable () -> Void
     let startRunning: @Sendable () throws -> Void
     let stopRunning: @Sendable () throws -> Void
+
+    init(
+        previewSession: CaptureSessionReference? = nil,
+        configure: @escaping @Sendable (CameraPosition) throws -> Void,
+        reset: @escaping @Sendable () -> Void,
+        startRunning: @escaping @Sendable () throws -> Void,
+        stopRunning: @escaping @Sendable () throws -> Void
+    ) {
+        self.previewSession = previewSession
+        self.configure = configure
+        self.reset = reset
+        self.startRunning = startRunning
+        self.stopRunning = stopRunning
+    }
 
 }
