@@ -12,55 +12,76 @@ enum CaptureSessionClientError: Error {
     case failure
 }
 
+enum CaptureSessionClientOperation: Equatable {
+    case all
+    case configure
+    case start
+    case stop
+}
+
 final class CaptureSessionClientSpy: @unchecked Sendable {
 
     private let lock = NSLock()
     private let operationDuration: TimeInterval
     private let error: (any Error)?
+    private let failingOperation: CaptureSessionClientOperation
     private var activeOperations = 0
     private(set) var maximumConcurrentOperations = 0
     private(set) var didRunOnMainThread = false
     private(set) var configureCount = 0
     private(set) var configuredPositions: [CameraPosition] = []
+    private(set) var resetCount = 0
     private(set) var startCount = 0
     private(set) var stopCount = 0
 
     init(
         operationDuration: TimeInterval = .zero,
-        error: (any Error)? = nil
+        error: (any Error)? = nil,
+        failingOperation: CaptureSessionClientOperation = .all
     ) {
         self.operationDuration = operationDuration
         self.error = error
+        self.failingOperation = failingOperation
     }
 
     var operations: CaptureSessionOperations {
         CaptureSessionOperations(
             configure: configure,
+            reset: reset,
             startRunning: startRunning,
             stopRunning: stopRunning
         )
     }
 
+    func reset() {
+        lock.lock()
+        resetCount += 1
+        lock.unlock()
+    }
+
     func configure(for position: CameraPosition) throws {
-        try performOperation {
+        try performOperation(.configure) {
             configureCount += 1
             configuredPositions.append(position)
         }
     }
 
     func startRunning() throws {
-        try performOperation {
+        try performOperation(.start) {
             startCount += 1
         }
     }
 
     func stopRunning() throws {
-        try performOperation {
+        try performOperation(.stop) {
             stopCount += 1
         }
     }
 
-    private func performOperation(_ updateCount: () -> Void) throws {
+    private func performOperation(
+        _ operation: CaptureSessionClientOperation,
+        updateCount: () -> Void
+    ) throws {
         lock.lock()
         activeOperations += 1
         maximumConcurrentOperations = max(maximumConcurrentOperations, activeOperations)
@@ -74,7 +95,7 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
         activeOperations -= 1
         lock.unlock()
 
-        if let error {
+        if let error, failingOperation == .all || failingOperation == operation {
             throw error
         }
     }

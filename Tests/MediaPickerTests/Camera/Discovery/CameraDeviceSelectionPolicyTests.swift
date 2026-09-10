@@ -59,21 +59,3 @@ struct CameraDeviceSelectionPolicyTests {
     }
 
 }
-
-private struct CameraDeviceStub: CameraDeviceCandidate {
-
-    let cameraDeviceIdentifier: String
-    let cameraPosition: CameraPosition
-    let cameraDeviceKind: CameraDeviceKind
-
-    init(
-        identifier: String,
-        position: CameraPosition,
-        kind: CameraDeviceKind
-    ) {
-        cameraDeviceIdentifier = identifier
-        cameraPosition = position
-        cameraDeviceKind = kind
-    }
-
-}

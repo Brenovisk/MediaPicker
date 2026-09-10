@@ -2,6 +2,8 @@
 enum CameraEvent: Sendable, Equatable {
     case prepare
     case preparationSucceeded
+    case suspend
+    case resume
     case capturePhoto
     case photoCaptured
     case startRecording

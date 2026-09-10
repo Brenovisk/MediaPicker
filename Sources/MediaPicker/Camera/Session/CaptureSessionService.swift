@@ -1,3 +1,10 @@
+//
+//  CaptureSessionService.swift
+//  MediaPicker
+//
+//  Created by Breno Lucas on 09/09/26.
+//
+
 import Dispatch
 
 /**
@@ -14,7 +21,14 @@ actor CaptureSessionService {
 
     nonisolated private let executor: DispatchSerialQueue
     private let operations: CaptureSessionOperations
+    private var stateMachine = CameraStateMachine()
     private var configuredPosition: CameraPosition?
+    private var isPickerActive = false
+    private var isSessionRunning = false
+
+    var state: CameraState {
+        stateMachine.state
+    }
 
     nonisolated var unownedExecutor: UnownedSerialExecutor {
         executor.asUnownedSerialExecutor()
@@ -44,17 +58,112 @@ actor CaptureSessionService {
         }
     }
 
-    func startRunning() throws {
+    func open(for position: CameraPosition) throws {
+        isPickerActive = true
+
+        switch state {
+        case .ready:
+            return
+        case .suspended:
+            try resumeSession()
+        case .idle, .failed:
+            try prepareSession(for: position)
+        case .preparing, .capturingPhoto, .recording, .stoppingRecording:
+            throw CameraStateTransitionError(state: state, event: .prepare)
+        }
+    }
+
+    func close() throws {
+        isPickerActive = false
+
+        guard requiresClosing else { return }
+
+        try stopSessionHandlingFailure()
+        resetSession()
+
+        try stateMachine.handle(.reset)
+    }
+
+    func applicationDidEnterBackground() throws {
+        guard isPickerActive, isSessionRunning else { return }
+
+        do {
+            try stopSession()
+            try stateMachine.handle(.suspend)
+        } catch let error as MediaPickerError {
+            try? stateMachine.handle(.fail(error))
+            throw error
+        }
+    }
+
+    func applicationWillEnterForeground() throws {
+        guard isPickerActive, state == .suspended else { return }
+        try resumeSession()
+    }
+
+}
+
+// MARK: Helper Methods
+extension CaptureSessionService {
+
+    private var requiresClosing: Bool {
+        state != .idle || configuredPosition != nil || isSessionRunning
+    }
+
+    private func stopSessionHandlingFailure() throws {
+        do {
+            try stopSession()
+        } catch let error as MediaPickerError {
+            try? stateMachine.handle(.fail(error))
+            throw error
+        }
+    }
+
+    private func resetSession() {
+        operations.reset()
+        configuredPosition = nil
+    }
+
+    private func prepareSession(for position: CameraPosition) throws {
+        try stateMachine.handle(.prepare)
+
+        do {
+            try configure(for: position)
+            try startSession()
+            try stateMachine.handle(.preparationSucceeded)
+        } catch let error as MediaPickerError {
+            try? stateMachine.handle(.fail(error))
+            throw error
+        }
+    }
+
+    private func resumeSession() throws {
+        do {
+            try startSession()
+            try stateMachine.handle(.resume)
+        } catch let error as MediaPickerError {
+            try? stateMachine.handle(.fail(error))
+            throw error
+        }
+    }
+
+    private func startSession() throws {
+        guard isSessionRunning == false else { return }
+
         do {
             try operations.startRunning()
+            isSessionRunning = true
         } catch {
             throw MediaPickerError.captureSessionStartFailed
         }
     }
 
-    func stopRunning() throws {
+    private func stopSession() throws {
+        guard isSessionRunning else { return }
+
         do {
             try operations.stopRunning()
+            isSessionRunning = false
         } catch {
             throw MediaPickerError.captureSessionStopFailed
         }

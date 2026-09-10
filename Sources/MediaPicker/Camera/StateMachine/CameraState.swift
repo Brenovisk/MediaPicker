@@ -9,6 +9,7 @@ enum CameraState: Sendable, Equatable {
     case idle
     case preparing
     case ready
+    case suspended
     case capturingPhoto
     case recording
     case stoppingRecording

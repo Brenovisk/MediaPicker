@@ -1,3 +1,10 @@
+//
+//  CaptureSessionStorage.swift
+//  MediaPicker
+//
+//  Created by Breno Lucas on 09/09/26.
+//
+
 import AVFoundation
 
 extension CaptureSessionOperations {
@@ -7,6 +14,7 @@ extension CaptureSessionOperations {
 
         return CaptureSessionOperations(
             configure: storage.configure,
+            reset: storage.reset,
             startRunning: storage.startRunning,
             stopRunning: storage.stopRunning
         )
@@ -41,6 +49,21 @@ private final class CaptureSessionStorage: @unchecked Sendable {
 
     func startRunning() {
         session.startRunning()
+    }
+
+    func reset() {
+        session.beginConfiguration()
+
+        for input in session.inputs {
+            session.removeInput(input)
+        }
+
+        for output in session.outputs {
+            session.removeOutput(output)
+        }
+
+        configuredPosition = nil
+        session.commitConfiguration()
     }
 
     func stopRunning() {
