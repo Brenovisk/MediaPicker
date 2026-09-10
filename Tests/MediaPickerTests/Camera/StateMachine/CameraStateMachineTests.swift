@@ -29,6 +29,16 @@ struct CameraStateMachineTests {
         #expect(stateMachine.state == .ready)
     }
 
+    @Test func suspendedCameraCanResumeToReady() throws {
+        var stateMachine = try readyStateMachine()
+
+        try stateMachine.handle(.suspend)
+        #expect(stateMachine.state == .suspended)
+
+        try stateMachine.handle(.resume)
+        #expect(stateMachine.state == .ready)
+    }
+
     @Test func recordingStopsBeforeReturningCameraToReady() throws {
         var stateMachine = try readyStateMachine()
 

@@ -1,3 +1,10 @@
+//
+//  CaptureSessionOperations.swift
+//  MediaPicker
+//
+//  Created by Breno Lucas on 09/09/26.
+//
+
 /**
  Injectable session commands used to test the actor without real hardware.
 
@@ -9,6 +16,7 @@
 struct CaptureSessionOperations: Sendable {
 
     let configure: @Sendable (CameraPosition) throws -> Void
+    let reset: @Sendable () -> Void
     let startRunning: @Sendable () throws -> Void
     let stopRunning: @Sendable () throws -> Void
 
