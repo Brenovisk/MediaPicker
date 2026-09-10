@@ -12,6 +12,9 @@ enum MediaPickerConstants {
         case captureSessionStartFailed
         case captureSessionStopFailed
         case captureSessionSwitchFailed
+        case unsupportedFlashMode
+        case unsupportedTorchMode
+        case cameraDeviceConfigurationFailed
         case photoLibraryLoadingFailed
         case unsupportedFormat
         case unknownFailure
@@ -70,6 +73,12 @@ extension MediaPickerConstants.Text {
             return "MediaPicker could not stop the camera session."
         case .captureSessionSwitchFailed:
             return "MediaPicker could not switch the active camera."
+        case .unsupportedFlashMode:
+            return "The active camera does not support the requested flash mode."
+        case .unsupportedTorchMode:
+            return "The active camera does not support the requested torch mode."
+        case .cameraDeviceConfigurationFailed:
+            return "MediaPicker could not configure the active camera device."
         case .photoLibraryLoadingFailed:
             return "MediaPicker could not load the selected photo-library item."
         case .unsupportedFormat:

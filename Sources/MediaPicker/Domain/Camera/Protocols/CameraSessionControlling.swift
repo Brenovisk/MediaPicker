@@ -17,13 +17,24 @@
  The contract is `Sendable` because calls cross actor boundaries under Swift 6.
 */
 protocol CameraSessionControlling: Sendable {
+
     var state: CameraState { get async }
     var activeCameraPosition: CameraPosition? { get async }
+
+    var lightingCapabilities: CameraLightingCapabilities { get async }
+    var flashMode: CameraFlashMode { get async }
+    var torchMode: CameraTorchMode { get async }
+
     func open(for position: CameraPosition) async throws
     func close() async throws
+
     func applicationDidEnterBackground() async throws
     func applicationWillEnterForeground() async throws
+
     func switchCamera() async throws -> CameraPosition
+
+    func setFlashMode(_ mode: CameraFlashMode) async throws
+    func setTorchMode(_ mode: CameraTorchMode) async throws
 
 }
 
@@ -32,7 +43,10 @@ extension CameraSessionControlling {
     func snapshot() async -> CameraSessionSnapshot {
         await CameraSessionSnapshot(
             state: state,
-            position: activeCameraPosition
+            position: activeCameraPosition,
+            lightingCapabilities: lightingCapabilities,
+            flashMode: flashMode,
+            torchMode: torchMode
         )
     }
 

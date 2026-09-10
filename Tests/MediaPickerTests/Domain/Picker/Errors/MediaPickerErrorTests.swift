@@ -15,6 +15,9 @@ struct MediaPickerErrorTests {
             .captureSessionStartFailed,
             .captureSessionStopFailed,
             .captureSessionSwitchFailed,
+            .unsupportedFlashMode,
+            .unsupportedTorchMode,
+            .cameraDeviceConfigurationFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown
@@ -34,6 +37,9 @@ struct MediaPickerErrorTests {
             .captureSessionStartFailed,
             .captureSessionStopFailed,
             .captureSessionSwitchFailed,
+            .unsupportedFlashMode,
+            .unsupportedTorchMode,
+            .cameraDeviceConfigurationFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown

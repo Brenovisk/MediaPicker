@@ -15,6 +15,8 @@ struct CameraPreviewDependencies {
     let closeCamera: CloseCameraUseCase
     let updateCameraSession: UpdateCameraSessionUseCase
     let switchCamera: SwitchCameraUseCase
+    let setFlashMode: SetCameraFlashModeUseCase
+    let setTorchMode: SetCameraTorchModeUseCase
 
     static func live() -> CameraPreviewDependencies {
         make(cameraSession: CaptureSessionService())
@@ -43,7 +45,9 @@ struct CameraPreviewDependencies {
             openCamera: openCameraUseCase,
             closeCamera: closeCameraUseCase,
             updateCameraSession: updateCameraSessionUseCase,
-            switchCamera: switchCameraUseCase
+            switchCamera: switchCameraUseCase,
+            setFlashMode: SetCameraFlashModeUseCase(cameraSession: cameraSession),
+            setTorchMode: SetCameraTorchModeUseCase(cameraSession: cameraSession)
         )
     }
 

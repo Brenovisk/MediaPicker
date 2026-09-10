@@ -44,6 +44,15 @@ public enum MediaPickerError: Error, Sendable, Equatable, Hashable {
     /// Replacing the active camera input failed.
     case captureSessionSwitchFailed
 
+    /// The active camera does not support the requested photo-flash mode.
+    case unsupportedFlashMode
+
+    /// The active camera does not support the requested video-torch mode.
+    case unsupportedTorchMode
+
+    /// Locking or configuring the active camera device failed.
+    case cameraDeviceConfigurationFailed
+
     /// Loading selected content from the photo library failed.
     case photoLibraryLoadingFailed
 
@@ -76,6 +85,12 @@ extension MediaPickerError: LocalizedError {
             MediaPickerConstants.Text.captureSessionStopFailed.value
         case .captureSessionSwitchFailed:
             MediaPickerConstants.Text.captureSessionSwitchFailed.value
+        case .unsupportedFlashMode:
+            MediaPickerConstants.Text.unsupportedFlashMode.value
+        case .unsupportedTorchMode:
+            MediaPickerConstants.Text.unsupportedTorchMode.value
+        case .cameraDeviceConfigurationFailed:
+            MediaPickerConstants.Text.cameraDeviceConfigurationFailed.value
         case .photoLibraryLoadingFailed:
             MediaPickerConstants.Text.photoLibraryLoadingFailed.value
         case .unsupportedFormat:

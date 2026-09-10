@@ -20,10 +20,15 @@ final class CameraPreviewViewModel {
     private let closeCameraUseCase: CloseCameraUseCase
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
+    private let setFlashModeUseCase: SetCameraFlashModeUseCase
+    private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
+    private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
+    private(set) var flashMode: CameraFlashMode = .off
+    private(set) var torchMode: CameraTorchMode = .off
     private(set) var isSwitchingCamera = false
 
     private(set) var previewBlurRadius: CGFloat = .zero
@@ -52,6 +57,8 @@ final class CameraPreviewViewModel {
         closeCameraUseCase = dependencies.closeCamera
         updateCameraSessionUseCase = dependencies.updateCameraSession
         switchCameraUseCase = dependencies.switchCamera
+        setFlashModeUseCase = dependencies.setFlashMode
+        setTorchModeUseCase = dependencies.setTorchMode
     }
 
     func open() async throws {
@@ -72,12 +79,22 @@ final class CameraPreviewViewModel {
 
         do {
             try await prepareFrozenFrame()
-            let newPosition = try await switchCameraDuringFlip()
-            await presentNewPreview(at: newPosition)
+            let snapshot = try await switchCameraDuringFlip()
+            await presentNewPreview(using: snapshot)
         } catch {
             cancelCameraSwitchTransition()
             throw error
         }
+    }
+
+    func setFlashMode(_ mode: CameraFlashMode) async throws {
+        let snapshot = try await setFlashModeUseCase.execute(mode: mode)
+        apply(snapshot)
+    }
+
+    func setTorchMode(_ mode: CameraTorchMode) async throws {
+        let snapshot = try await setTorchModeUseCase.execute(mode: mode)
+        apply(snapshot)
     }
 
     func updateSession(for phase: ScenePhase) async throws {
@@ -138,19 +155,19 @@ extension CameraPreviewViewModel {
         )
     }
 
-    private func switchCameraDuringFlip() async throws -> CameraPosition {
-        async let cameraPosition = switchCameraUseCase.execute()
+    private func switchCameraDuringFlip() async throws -> CameraSessionSnapshot {
+        async let snapshot = switchCameraUseCase.execute()
 
         completeFrozenFrameFlip()
         try await Task.sleep(
             for: .seconds(CameraPreviewConstants.Motion.flipDuration)
         )
 
-        return try await cameraPosition
+        return try await snapshot
     }
 
-    private func presentNewPreview(at position: CameraPosition) async {
-        activePosition = position
+    private func presentNewPreview(using snapshot: CameraSessionSnapshot) async {
+        apply(snapshot)
         finishCameraSwitchTransition()
         try? await Task.sleep(
             for: .seconds(CameraPreviewConstants.Motion.revealDuration)
@@ -204,6 +221,9 @@ extension CameraPreviewViewModel {
 
     private func apply(_ snapshot: CameraSessionSnapshot) {
         cameraState = snapshot.state
+        lightingCapabilities = snapshot.lightingCapabilities
+        flashMode = snapshot.flashMode
+        torchMode = snapshot.torchMode
 
         if let position = snapshot.position {
             activePosition = position

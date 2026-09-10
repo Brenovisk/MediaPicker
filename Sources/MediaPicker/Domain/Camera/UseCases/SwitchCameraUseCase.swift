@@ -20,8 +20,8 @@ final class SwitchCameraUseCase {
         self.frameReadiness = frameReadiness
     }
 
-    func execute() async throws -> CameraPosition {
-        let newPosition = try await cameraSession.switchCamera()
+    func execute() async throws -> CameraSessionSnapshot {
+        _ = try await cameraSession.switchCamera()
         let sequenceAfterSwitch = frameReadiness.latestFrameSequence
         let isPreviewReady = await frameReadiness.waitForFrame(
             after: sequenceAfterSwitch
@@ -32,7 +32,7 @@ final class SwitchCameraUseCase {
             throw MediaPickerError.captureSessionSwitchFailed
         }
 
-        return newPosition
+        return await cameraSession.snapshot()
     }
 
     private func restorePreviousCamera() async throws {
