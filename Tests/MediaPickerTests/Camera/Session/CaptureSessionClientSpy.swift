@@ -17,6 +17,7 @@ enum CaptureSessionClientOperation: Equatable {
     case configure
     case start
     case stop
+    case switchCamera
 }
 
 final class CaptureSessionClientSpy: @unchecked Sendable {
@@ -33,6 +34,9 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private(set) var resetCount = 0
     private(set) var startCount = 0
     private(set) var stopCount = 0
+    private(set) var switchCount = 0
+    private(set) var switchedPositions: [CameraPosition] = []
+    private(set) var preparedSwitchPositions: [CameraPosition] = []
 
     init(
         operationDuration: TimeInterval = .zero,
@@ -49,7 +53,9 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
             configure: configure,
             reset: reset,
             startRunning: startRunning,
-            stopRunning: stopRunning
+            stopRunning: stopRunning,
+            prepareCameraSwitch: prepareCameraSwitch,
+            switchCamera: switchCamera
         )
     }
 
@@ -76,6 +82,19 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
         try performOperation(.stop) {
             stopCount += 1
         }
+    }
+
+    func switchCamera(to position: CameraPosition) throws {
+        try performOperation(.switchCamera) {
+            switchCount += 1
+            switchedPositions.append(position)
+        }
+    }
+
+    func prepareCameraSwitch(to position: CameraPosition) {
+        lock.lock()
+        preparedSwitchPositions.append(position)
+        lock.unlock()
     }
 
     private func performOperation(

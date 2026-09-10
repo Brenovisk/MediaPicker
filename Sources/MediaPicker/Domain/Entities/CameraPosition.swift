@@ -5,3 +5,16 @@ public enum CameraPosition: Sendable, Equatable {
     case back
     case front
 }
+
+extension CameraPosition {
+
+    var opposite: CameraPosition {
+        switch self {
+        case .back:
+            .front
+        case .front:
+            .back
+        }
+    }
+
+}

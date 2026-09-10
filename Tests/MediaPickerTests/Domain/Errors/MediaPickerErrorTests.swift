@@ -14,6 +14,7 @@ struct MediaPickerErrorTests {
             .captureSessionConfigurationFailed,
             .captureSessionStartFailed,
             .captureSessionStopFailed,
+            .captureSessionSwitchFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown
@@ -32,6 +33,7 @@ struct MediaPickerErrorTests {
             .captureSessionConfigurationFailed,
             .captureSessionStartFailed,
             .captureSessionStopFailed,
+            .captureSessionSwitchFailed,
             .photoLibraryLoadingFailed,
             .unsupportedFormat,
             .unknown

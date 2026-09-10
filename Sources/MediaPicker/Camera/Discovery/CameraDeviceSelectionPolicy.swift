@@ -1,9 +1,9 @@
 /**
  Selects camera devices using a stable priority instead of relying on discovery order.
 
- Back cameras prefer versatile multi-camera devices before individual lenses:
- triple, dual-wide, dual, wide-angle, ultra-wide, telephoto, then external.
- Front cameras prefer TrueDepth, followed by wide-angle and external cameras.
+ Both positions prefer the physical wide-angle camera because it activates more
+ quickly when replacing an input. Virtual multi-camera and TrueDepth devices
+ remain predictable fallbacks when a wide-angle device is unavailable.
  Unknown device types remain usable as the final fallback for either position.
 */
 struct CameraDeviceSelectionPolicy {
@@ -26,9 +26,9 @@ struct CameraDeviceSelectionPolicy {
     private func priority(for position: CameraPosition) -> [CameraDeviceKind] {
         switch position {
         case .back:
-            [.triple, .dualWide, .dual, .wideAngle, .ultraWide, .telephoto, .external, .unknown]
+            [.wideAngle, .triple, .dualWide, .dual, .ultraWide, .telephoto, .external, .unknown]
         case .front:
-            [.trueDepth, .wideAngle, .external, .unknown]
+            [.wideAngle, .trueDepth, .external, .unknown]
         }
     }
 

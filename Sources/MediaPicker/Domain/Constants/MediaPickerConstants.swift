@@ -4,12 +4,14 @@ enum MediaPickerConstants {
 
     enum Text {
         case greeting
+        case switchCamera
 
         case photoCaptureFailed
         case videoRecordingFailed
         case captureSessionConfigurationFailed
         case captureSessionStartFailed
         case captureSessionStopFailed
+        case captureSessionSwitchFailed
         case photoLibraryLoadingFailed
         case unsupportedFormat
         case unknownFailure
@@ -53,6 +55,8 @@ extension MediaPickerConstants.Text {
         switch self {
         case .greeting:
             return "Olá do meu SPM Framework!"
+        case .switchCamera:
+            return "Switch camera"
 
         case .photoCaptureFailed:
             return "MediaPicker could not capture the photo."
@@ -64,6 +68,8 @@ extension MediaPickerConstants.Text {
             return "MediaPicker could not start the camera session."
         case .captureSessionStopFailed:
             return "MediaPicker could not stop the camera session."
+        case .captureSessionSwitchFailed:
+            return "MediaPicker could not switch the active camera."
         case .photoLibraryLoadingFailed:
             return "MediaPicker could not load the selected photo-library item."
         case .unsupportedFormat:

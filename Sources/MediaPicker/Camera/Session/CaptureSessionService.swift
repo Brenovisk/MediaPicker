@@ -31,6 +31,14 @@ actor CaptureSessionService {
         stateMachine.state
     }
 
+    var activeCameraPosition: CameraPosition? {
+        configuredPosition
+    }
+
+    var canSwitchCamera: Bool {
+        state == .ready
+    }
+
     nonisolated var unownedExecutor: UnownedSerialExecutor {
         executor.asUnownedSerialExecutor()
     }
@@ -103,6 +111,25 @@ actor CaptureSessionService {
         try resumeSession()
     }
 
+    @discardableResult
+    func switchCamera() throws -> CameraPosition {
+        guard canSwitchCamera, let configuredPosition else {
+            throw MediaPickerError.captureSessionSwitchFailed
+        }
+
+        let newPosition = configuredPosition.opposite
+
+        do {
+            try operations.switchCamera(newPosition)
+            self.configuredPosition = newPosition
+            return newPosition
+        } catch let error as MediaPickerError {
+            throw error
+        } catch {
+            throw MediaPickerError.captureSessionSwitchFailed
+        }
+    }
+
 }
 
 // MARK: Helper Methods
@@ -133,6 +160,7 @@ extension CaptureSessionService {
             try configure(for: position)
             try startSession()
             try stateMachine.handle(.preparationSucceeded)
+            operations.prepareCameraSwitch(position.opposite)
         } catch let error as MediaPickerError {
             try? stateMachine.handle(.fail(error))
             throw error
