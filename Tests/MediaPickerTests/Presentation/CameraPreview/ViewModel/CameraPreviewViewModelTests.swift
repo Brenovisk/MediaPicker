@@ -44,6 +44,25 @@ struct CameraPreviewViewModelTests {
 
         #expect(viewModel.cameraState == .suspended)
         #expect(viewModel.canSwitchCamera == false)
+        #expect(
+            viewModel.privacyBlurRadius == CameraPreviewConstants.Motion.privacyBlurRadius
+        )
+    }
+
+    @Test func privacyBlurIsRemovedAfterReturningToForeground() async throws {
+        let client = CaptureSessionClientSpy()
+        let service = CaptureSessionService(operations: client.operations)
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: service)
+        )
+        try await viewModel.open()
+        try await viewModel.updateSession(for: .background)
+
+        try await viewModel.updateSession(for: .active)
+
+        #expect(viewModel.cameraState == .ready)
+        #expect(viewModel.privacyBlurRadius == .zero)
     }
 
 }

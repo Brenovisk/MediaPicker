@@ -23,6 +23,9 @@ enum CameraPreviewConstants {
         static let blurDuration = 0.08
         static let flipDuration = 0.3
         static let revealDuration = 0.5
+        static let privacyBlurRadius: CGFloat = 20
+        static let privacyBlurDuration = 0.8
+        static let privacyRevealDuration = 0.2
         static let previewReadinessTimeout = 4.0
         static let readinessPollingInterval = 0.016
         static let pressedScale = 1.08

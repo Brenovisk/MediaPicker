@@ -27,11 +27,16 @@ final class CameraPreviewViewModel {
     private(set) var isSwitchingCamera = false
 
     private(set) var previewBlurRadius: CGFloat = .zero
+    private(set) var privacyBlurRadius: CGFloat = .zero
     private(set) var previewOpacity = 1.0
     private(set) var previewRotationDegrees = 0.0
 
     var canSwitchCamera: Bool {
         cameraState == .ready && isSwitchingCamera == false
+    }
+
+    var displayedPreviewBlurRadius: CGFloat {
+        max(previewBlurRadius, privacyBlurRadius)
     }
 
     init(
@@ -82,15 +87,17 @@ final class CameraPreviewViewModel {
                 event: .enteredForeground
             )
             apply(snapshot)
+            revealPreviewAfterPrivacy()
         case .background:
+            concealPreviewForPrivacy()
             let snapshot = try await updateCameraSessionUseCase.execute(
                 event: .enteredBackground
             )
             apply(snapshot)
         case .inactive:
-            break
+            concealPreviewForPrivacy()
         @unknown default:
-            break
+            concealPreviewForPrivacy()
         }
     }
 
@@ -98,6 +105,22 @@ final class CameraPreviewViewModel {
 
 // MARK: Helper Methods
 extension CameraPreviewViewModel {
+
+    private func concealPreviewForPrivacy() {
+        withAnimation(
+            .easeIn(duration: CameraPreviewConstants.Motion.privacyBlurDuration)
+        ) {
+            privacyBlurRadius = CameraPreviewConstants.Motion.privacyBlurRadius
+        }
+    }
+
+    private func revealPreviewAfterPrivacy() {
+        withAnimation(
+            .easeOut(duration: CameraPreviewConstants.Motion.privacyRevealDuration)
+        ) {
+            privacyBlurRadius = .zero
+        }
+    }
 
     private func beginCameraSwitch() {
         isSwitchingCamera = true

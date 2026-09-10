@@ -30,7 +30,7 @@ public struct CameraPreview: View {
                 )
             }
         }
-        .blur(radius: viewModel.previewBlurRadius)
+        .blur(radius: viewModel.displayedPreviewBlurRadius)
         .opacity(viewModel.previewOpacity)
         .rotation3DEffect(
             .degrees(viewModel.previewRotationDegrees),
