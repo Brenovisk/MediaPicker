@@ -17,7 +17,7 @@ import Dispatch
  Future input, output, and configuration mutations must be implemented as actor
  methods here to preserve this isolation.
 */
-actor CaptureSessionService {
+actor CaptureSessionService: CameraSessionControlling {
 
     nonisolated private let executor: DispatchSerialQueue
     nonisolated let previewSession: CaptureSessionReference?

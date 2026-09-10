@@ -22,7 +22,7 @@ public struct CameraPreview: View {
 
     public var body: some View {
         Group {
-            if let previewSession = viewModel.service.previewSession {
+            if let previewSession = viewModel.previewSession {
                 CameraPreviewRepresentable(
                     previewSession: previewSession,
                     isMirrored: viewModel.activePosition == .front,

@@ -18,7 +18,7 @@ struct CameraPreviewViewModelTests {
         let service = CaptureSessionService(operations: client.operations)
         let viewModel = CameraPreviewViewModel(
             initialPosition: .back,
-            service: service
+            dependencies: .make(cameraSession: service)
         )
         try await viewModel.open()
 
@@ -36,7 +36,7 @@ struct CameraPreviewViewModelTests {
         let service = CaptureSessionService(operations: client.operations)
         let viewModel = CameraPreviewViewModel(
             initialPosition: .back,
-            service: service
+            dependencies: .make(cameraSession: service)
         )
         try await viewModel.open()
 

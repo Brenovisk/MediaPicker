@@ -8,8 +8,16 @@
 #if os(iOS)
 import Foundation
 
+/**
+ Bridges camera-switching logic to the UIKit preview without exposing the view
+ outside the Presentation layer.
+
+ It keeps a weak reference to the active preview, freezes and releases the
+ displayed frame during transitions, and confirms readiness by waiting for a
+ frame sequence newer than the one produced before the camera switch.
+*/
 @MainActor
-final class CameraPreviewSurface {
+final class CameraPreviewSurface: CameraFrameReadinessProviding {
 
     private weak var previewView: CameraPreviewUIKitView?
 

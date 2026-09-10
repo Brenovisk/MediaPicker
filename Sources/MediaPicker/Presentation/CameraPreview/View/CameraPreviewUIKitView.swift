@@ -69,8 +69,10 @@ final class CameraPreviewUIKitView: UIView {
     @discardableResult
     func freezeCurrentFrame() -> UInt64? {
         guard frozenFrame == nil else { return latestFrameSequence }
+
         guard let frame = frameStore.latestFrame else { return nil }
         let sourceImage = CIImage(cvPixelBuffer: frame.pixelBuffer)
+
         guard let image = imageContext.createCGImage(
             sourceImage,
             from: sourceImage.extent
@@ -88,8 +90,10 @@ final class CameraPreviewUIKitView: UIView {
         snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         snapshot.contentMode = .scaleAspectFill
         snapshot.clipsToBounds = true
+
         addSubview(snapshot)
         frozenFrame = snapshot
+
         return frame.sequence
     }
 

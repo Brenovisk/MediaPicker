@@ -13,12 +13,19 @@ import SwiftUI
 @Observable
 final class CameraPreviewViewModel {
 
-    let service: CaptureSessionService
+    let previewSession: CaptureSessionReference?
     let previewSurface: CameraPreviewSurface
+
+    private let openCameraUseCase: OpenCameraUseCase
+    private let closeCameraUseCase: CloseCameraUseCase
+    private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
+    private let switchCameraUseCase: SwitchCameraUseCase
+
     private let initialPosition: CameraPosition
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
     private(set) var isSwitchingCamera = false
+
     private(set) var previewBlurRadius: CGFloat = .zero
     private(set) var previewOpacity = 1.0
     private(set) var previewRotationDegrees = 0.0
@@ -29,69 +36,41 @@ final class CameraPreviewViewModel {
 
     init(
         initialPosition: CameraPosition,
-        service: CaptureSessionService = CaptureSessionService(),
-        previewSurface: CameraPreviewSurface = CameraPreviewSurface()
+        dependencies: CameraPreviewDependencies = .live()
     ) {
         self.initialPosition = initialPosition
         activePosition = initialPosition
-        self.service = service
-        self.previewSurface = previewSurface
+        previewSession = dependencies.previewSession
+        previewSurface = dependencies.previewSurface
+
+        openCameraUseCase = dependencies.openCamera
+        closeCameraUseCase = dependencies.closeCamera
+        updateCameraSessionUseCase = dependencies.updateCameraSession
+        switchCameraUseCase = dependencies.switchCamera
     }
 
     func open() async throws {
-        try await service.open(for: initialPosition)
-        await synchronizeState()
+        let snapshot = try await openCameraUseCase.execute(position: initialPosition)
+        apply(snapshot)
     }
 
     func close() async throws {
-        try await service.close()
-        await synchronizeState()
+        let snapshot = try await closeCameraUseCase.execute()
+        apply(snapshot)
     }
 
     func switchCamera() async throws {
         guard canSwitchCamera else { return }
 
-        isSwitchingCamera = true
-        defer { isSwitchingCamera = false }
-
-        previewSurface.freezeCurrentFrame()
+        beginCameraSwitch()
+        defer { endCameraSwitch() }
 
         do {
-            blurFrozenFrame()
-            try await Task.sleep(
-                for: .seconds(CameraPreviewConstants.Motion.blurDuration)
-            )
-
-            async let cameraPosition = service.switchCamera()
-            
-            completeFrozenFrameFlip()
-            try await Task.sleep(
-                for: .seconds(CameraPreviewConstants.Motion.flipDuration)
-            )
-
-            let newPosition = try await cameraPosition
-            let sequenceAfterSwitch = previewSurface.latestFrameSequence
-            let isPreviewReady = await previewSurface.waitForFrame(
-                after: sequenceAfterSwitch
-            )
-
-            guard isPreviewReady else {
-                try await restorePreviousCamera()
-                throw MediaPickerError.captureSessionSwitchFailed
-            }
-
-            activePosition = newPosition
-            resetCompletedFlip()
-            previewSurface.releaseFrozenFrame()
-            revealUpdatedPreview()
-            try? await Task.sleep(
-                for: .seconds(CameraPreviewConstants.Motion.revealDuration)
-            )
-            await synchronizeState()
+            try await prepareFrozenFrame()
+            let newPosition = try await switchCameraDuringFlip()
+            await presentNewPreview(at: newPosition)
         } catch {
-            resetCompletedFlip()
-            previewSurface.releaseFrozenFrame()
-            revealUpdatedPreview()
+            cancelCameraSwitchTransition()
             throw error
         }
     }
@@ -99,22 +78,71 @@ final class CameraPreviewViewModel {
     func updateSession(for phase: ScenePhase) async throws {
         switch phase {
         case .active:
-            try await service.applicationWillEnterForeground()
+            let snapshot = try await updateCameraSessionUseCase.execute(
+                event: .enteredForeground
+            )
+            apply(snapshot)
         case .background:
-            try await service.applicationDidEnterBackground()
+            let snapshot = try await updateCameraSessionUseCase.execute(
+                event: .enteredBackground
+            )
+            apply(snapshot)
         case .inactive:
             break
         @unknown default:
             break
         }
-
-        await synchronizeState()
     }
 
 }
 
 // MARK: Helper Methods
 extension CameraPreviewViewModel {
+
+    private func beginCameraSwitch() {
+        isSwitchingCamera = true
+        previewSurface.freezeCurrentFrame()
+    }
+
+    private func endCameraSwitch() {
+        isSwitchingCamera = false
+    }
+
+    private func prepareFrozenFrame() async throws {
+        blurFrozenFrame()
+        try await Task.sleep(
+            for: .seconds(CameraPreviewConstants.Motion.blurDuration)
+        )
+    }
+
+    private func switchCameraDuringFlip() async throws -> CameraPosition {
+        async let cameraPosition = switchCameraUseCase.execute()
+
+        completeFrozenFrameFlip()
+        try await Task.sleep(
+            for: .seconds(CameraPreviewConstants.Motion.flipDuration)
+        )
+
+        return try await cameraPosition
+    }
+
+    private func presentNewPreview(at position: CameraPosition) async {
+        activePosition = position
+        finishCameraSwitchTransition()
+        try? await Task.sleep(
+            for: .seconds(CameraPreviewConstants.Motion.revealDuration)
+        )
+    }
+
+    private func finishCameraSwitchTransition() {
+        resetCompletedFlip()
+        previewSurface.releaseFrozenFrame()
+        revealUpdatedPreview()
+    }
+
+    private func cancelCameraSwitchTransition() {
+        finishCameraSwitchTransition()
+    }
 
     private func blurFrozenFrame() {
         withAnimation(
@@ -151,15 +179,10 @@ extension CameraPreviewViewModel {
         }
     }
 
-    private func restorePreviousCamera() async throws {
-        _ = try await service.switchCamera()
-        _ = await previewSurface.waitForFrame(after: nil)
-    }
+    private func apply(_ snapshot: CameraSessionSnapshot) {
+        cameraState = snapshot.state
 
-    private func synchronizeState() async {
-        cameraState = await service.state
-
-        if let position = await service.activeCameraPosition {
+        if let position = snapshot.position {
             activePosition = position
         }
     }

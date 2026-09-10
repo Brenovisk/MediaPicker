@@ -40,12 +40,15 @@ private final class CaptureSessionStorage: @unchecked Sendable {
     private let session: AVCaptureSession
     private let frameStore: CameraPreviewFrameStore
     private let videoOutput = AVCaptureVideoDataOutput()
+
     private let frameQueue = DispatchQueue(
         label: "com.brenolucas.MediaPicker.preview-frames",
         qos: .userInteractive
     )
+
     private let deviceDiscovery = CameraDeviceDiscoveryService()
     private var configuredPosition: CameraPosition?
+
     private var videoInput: AVCaptureDeviceInput?
     private var backCameraInput: AVCaptureDeviceInput?
     private var frontCameraInput: AVCaptureDeviceInput?
