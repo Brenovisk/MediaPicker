@@ -41,6 +41,9 @@ public enum MediaPickerError: Error, Sendable, Equatable, Hashable {
     /// Stopping the underlying camera capture session failed.
     case captureSessionStopFailed
 
+    /// Replacing the active camera input failed.
+    case captureSessionSwitchFailed
+
     /// Loading selected content from the photo library failed.
     case photoLibraryLoadingFailed
 
@@ -71,6 +74,8 @@ extension MediaPickerError: LocalizedError {
             MediaPickerConstants.Text.captureSessionConfigurationFailed.value
         case .captureSessionStopFailed:
             MediaPickerConstants.Text.captureSessionStopFailed.value
+        case .captureSessionSwitchFailed:
+            MediaPickerConstants.Text.captureSessionSwitchFailed.value
         case .photoLibraryLoadingFailed:
             MediaPickerConstants.Text.photoLibraryLoadingFailed.value
         case .unsupportedFormat:

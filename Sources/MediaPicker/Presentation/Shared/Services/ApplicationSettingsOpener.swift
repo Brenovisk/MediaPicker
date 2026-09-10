@@ -1,3 +1,10 @@
+//
+//  ApplicationSettingsOpener.swift
+//  MediaPicker
+//
+//  Created by Breno Lucas on 10/09/26.
+//
+
 import Foundation
 
 #if canImport(UIKit)

@@ -16,5 +16,6 @@ import AVFoundation
 final class CaptureSessionReference: @unchecked Sendable {
 
     let session = AVCaptureSession()
+    let frameStore = CameraPreviewFrameStore()
 
 }

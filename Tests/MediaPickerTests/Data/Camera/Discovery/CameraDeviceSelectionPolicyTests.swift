@@ -5,7 +5,7 @@ struct CameraDeviceSelectionPolicyTests {
 
     private let policy = CameraDeviceSelectionPolicy()
 
-    @Test func bestBackCameraIsSelectedRegardlessOfDiscoveryOrder() throws {
+    @Test func fastBackCameraIsSelectedRegardlessOfDiscoveryOrder() throws {
         let devices = [
             CameraDeviceStub(identifier: "telephoto", position: .back, kind: .telephoto),
             CameraDeviceStub(identifier: "wide", position: .back, kind: .wideAngle),
@@ -14,7 +14,7 @@ struct CameraDeviceSelectionPolicyTests {
 
         let device = try policy.bestDevice(for: .back, among: devices)
 
-        #expect(device.cameraDeviceIdentifier == "triple")
+        #expect(device.cameraDeviceIdentifier == "wide")
     }
 
     @Test func frontCameraIsFoundWhenPresent() throws {
@@ -26,7 +26,7 @@ struct CameraDeviceSelectionPolicyTests {
 
         let device = try policy.bestDevice(for: .front, among: devices)
 
-        #expect(device.cameraDeviceIdentifier == "true-depth")
+        #expect(device.cameraDeviceIdentifier == "front-wide")
     }
 
     @Test func unavailablePreferredTypeFallsBackPredictably() throws {

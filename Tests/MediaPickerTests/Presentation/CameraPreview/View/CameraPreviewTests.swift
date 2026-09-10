@@ -16,7 +16,10 @@ struct CameraPreviewTests {
 
     @Test func previewUsesProvidedSessionAndAspectFill() {
         let session = AVCaptureSession()
-        let view = CameraPreviewView(session: session)
+        let view = CameraPreviewUIKitView(
+            session: session,
+            frameStore: CameraPreviewFrameStore()
+        )
         let previewLayer = view.layer as? AVCaptureVideoPreviewLayer
 
         #expect(previewLayer?.session === session)
@@ -24,7 +27,10 @@ struct CameraPreviewTests {
     }
 
     @Test func previewLayerFollowsViewSizeChanges() {
-        let view = CameraPreviewView(session: AVCaptureSession())
+        let view = CameraPreviewUIKitView(
+            session: AVCaptureSession(),
+            frameStore: CameraPreviewFrameStore()
+        )
 
         view.frame = CGRect(x: 0, y: 0, width: 320, height: 640)
         view.layoutIfNeeded()
@@ -34,13 +40,29 @@ struct CameraPreviewTests {
 
     @Test func updatingPreviewDoesNotReplaceSessionOrLayer() {
         let session = AVCaptureSession()
-        let view = CameraPreviewView(session: session)
+        let view = CameraPreviewUIKitView(
+            session: session,
+            frameStore: CameraPreviewFrameStore()
+        )
         let originalLayer = view.layer
 
         view.updateVideoOrientation()
 
         #expect(view.layer === originalLayer)
         #expect((view.layer as? AVCaptureVideoPreviewLayer)?.session === session)
+    }
+
+    @Test func frontCameraMirroringIsExplicitAndReversible() {
+        let view = CameraPreviewUIKitView(
+            session: AVCaptureSession(),
+            frameStore: CameraPreviewFrameStore()
+        )
+
+        view.setMirroring(true)
+        #expect(view.isMirrored)
+
+        view.setMirroring(false)
+        #expect(view.isMirrored == false)
     }
 
     @Test(arguments: [
