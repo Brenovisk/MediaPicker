@@ -10,9 +10,11 @@ import AVFoundation
 extension CaptureSessionOperations {
 
     static var live: CaptureSessionOperations {
-        let storage = CaptureSessionStorage()
+        let previewSession = CaptureSessionReference()
+        let storage = CaptureSessionStorage(session: previewSession.session)
 
         return CaptureSessionOperations(
+            previewSession: previewSession,
             configure: storage.configure,
             reset: storage.reset,
             startRunning: storage.startRunning,
@@ -30,9 +32,13 @@ extension CaptureSessionOperations {
 */
 private final class CaptureSessionStorage: @unchecked Sendable {
 
-    private let session = AVCaptureSession()
+    private let session: AVCaptureSession
     private let deviceDiscovery = CameraDeviceDiscoveryService()
     private var configuredPosition: CameraPosition?
+
+    init(session: AVCaptureSession) {
+        self.session = session
+    }
 
     func configure(for position: CameraPosition) throws {
         guard configuredPosition != position else { return }

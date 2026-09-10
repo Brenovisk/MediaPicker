@@ -11,23 +11,31 @@ import SwiftUI
 struct ContentView: View {
 
     @State private var cameraAccessMessage = "Camera access has not been checked."
+    @State private var showsCameraPreview = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "camera")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
+        Group {
+            if showsCameraPreview {
+                CameraPreview()
+                    .ignoresSafeArea()
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "camera")
+                        .imageScale(.large)
+                        .foregroundStyle(.tint)
 
-            Text(cameraAccessMessage)
-                .multilineTextAlignment(.center)
+                    Text(cameraAccessMessage)
+                        .multilineTextAlignment(.center)
 
-            Button("Check camera access") {
-                Task { @MainActor in
-                    await prepareCameraAccess()
+                    Button("Check camera access") {
+                        Task { @MainActor in
+                            await prepareCameraAccess()
+                        }
+                    }
                 }
+                .padding()
             }
         }
-        .padding()
     }
 
 }
@@ -40,6 +48,7 @@ extension ContentView {
         do {
             try await MediaPicker().prepareCameraAccess()
             cameraAccessMessage = "Camera access is authorized."
+            showsCameraPreview = true
         } catch let error as MediaPickerError {
             cameraAccessMessage = error.localizedDescription
         } catch {

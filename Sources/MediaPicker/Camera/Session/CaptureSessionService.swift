@@ -20,6 +20,7 @@ import Dispatch
 actor CaptureSessionService {
 
     nonisolated private let executor: DispatchSerialQueue
+    nonisolated let previewSession: CaptureSessionReference?
     private let operations: CaptureSessionOperations
     private var stateMachine = CameraStateMachine()
     private var configuredPosition: CameraPosition?
@@ -38,6 +39,7 @@ actor CaptureSessionService {
         executor = DispatchSerialQueue(
             label: MediaPickerInfrastructureConstants.captureSessionQueueLabel
         )
+        previewSession = operations.previewSession
         self.operations = operations
     }
 
