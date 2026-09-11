@@ -7,6 +7,8 @@ set -euo pipefail
 # ---------------------------------------------------------
 
 MAX_DIFF_CHARS=100000
+AI_PROVIDER_OPTION=""
+SKIP_ISSUE=false
 
 # ---------------------------------------------------------
 # Helpers
@@ -29,6 +31,40 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+usage() {
+  cat <<'EOF'
+Usage: create-pr [claude|codex|gemini] [--no-issue]
+
+Options:
+  --no-issue  Create the Pull Request without requiring or linking an issue.
+  -h, --help  Show this help message.
+EOF
+}
+
+parse_arguments() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      claude|codex|gemini)
+        [[ -z "$AI_PROVIDER_OPTION" ]] ||
+          error "Only one AI provider can be selected."
+        AI_PROVIDER_OPTION="$1"
+        ;;
+      --no-issue)
+        SKIP_ISSUE=true
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        error "Unknown option: $1. Run 'create-pr --help' for usage."
+        ;;
+    esac
+
+    shift
+  done
+}
+
 cleanup() {
   rm -f \
     "${PROMPT_FILE:-}" \
@@ -39,6 +75,8 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+parse_arguments "$@"
 
 # ---------------------------------------------------------
 # Run repository checks first
@@ -184,7 +222,7 @@ gh auth status >/dev/null 2>&1 ||
 # Select and validate AI
 # ---------------------------------------------------------
 
-select_ai_provider "${1:-}"
+select_ai_provider "$AI_PROVIDER_OPTION"
 
 validate_ai_provider
 
@@ -211,14 +249,18 @@ if [[ "$CURRENT_BRANCH" == "develop" ]]; then
 else
   BASE_BRANCH="develop"
 
-  if [[ "$CURRENT_BRANCH" =~ ^[^/]+/([0-9]+)([-/].*)?$ ]]; then
+  if [[ "$SKIP_ISSUE" == true ]]; then
+    ISSUE_NUMBER=""
+  elif [[ "$CURRENT_BRANCH" =~ ^[^/]+/([0-9]+)([-/].*)?$ ]]; then
     ISSUE_NUMBER="${BASH_REMATCH[1]}"
   else
     error "Branch must follow the format type/issue-description (example: feat/7-media-type)."
   fi
 
-  gh issue view "$ISSUE_NUMBER" >/dev/null 2>&1 ||
-    error "Issue #$ISSUE_NUMBER was not found or is not accessible."
+  if [[ -n "$ISSUE_NUMBER" ]]; then
+    gh issue view "$ISSUE_NUMBER" >/dev/null 2>&1 ||
+      error "Issue #$ISSUE_NUMBER was not found or is not accessible."
+  fi
 fi
 
 if [[ -n "$ISSUE_NUMBER" ]]; then

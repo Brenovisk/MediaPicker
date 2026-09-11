@@ -163,6 +163,11 @@ and asks for confirmation before committing. Feature-branch names must include
 the issue number, such as `fix/42-handle-denied-permission`, so the command can
 derive the commit scope.
 
+For a change that intentionally has no corresponding issue, run
+`create-commit --no-issue` (or, for example,
+`create-commit codex --no-issue`). The command then omits the issue scope and
+generates a message such as `fix: 🐛 correct camera orientation`.
+
 Review the proposed plan before approving it. Do not stage generated files,
 secrets, unrelated formatting, or changes belonging to another issue. See
 [the create-commit guide](.scripts/create-commit/README.md) for supported types,
@@ -184,6 +189,10 @@ pushes the branch, loads the repository pull-request template, generates a
 consistent title and description, inserts the related issue, and shows the
 complete proposal for confirmation before creating the pull request. SwiftLint
 runs before the package tests, so either validation can stop the operation.
+
+When a pull request intentionally has no corresponding issue, use
+`create-pr --no-issue` (or, for example, `create-pr codex --no-issue`). This
+skips issue-number validation and leaves the Related Issues section empty.
 
 Review the generated content carefully. It must accurately describe visible
 behavior, technical decisions, validation, risks, and breaking changes. Leave

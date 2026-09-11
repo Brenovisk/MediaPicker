@@ -9,21 +9,41 @@ modules. This keeps v0.0.1 small while making dependencies and ownership clear.
 ### Domain
 
 Framework-independent models and rules shared by every picker flow. This area
-will contain types such as `MediaType`, `MediaSource`, `CapturedMedia`,
-`MediaPickerConfiguration`, and `MediaPickerError`.
+is organized by functional context instead of one global folder per technical
+type:
+
+```text
+Domain/
+├── Camera/
+│   ├── Entities/
+│   ├── Protocols/
+│   ├── StateMachine/
+│   └── UseCases/
+├── Media/
+│   └── Entities/
+└── Picker/
+    ├── Constants/
+    ├── Entities/
+    └── Errors/
+```
+
+`Camera` contains camera rules and operations, `Media` contains values shared by
+camera and photo-library flows, and `Picker` contains configuration and errors
+for the public picker workflow. New files should be placed by the behavior they
+belong to, using a technical subfolder only when that context needs one.
 
 Domain code must not import SwiftUI, AVFoundation, PhotosUI, or UIKit.
 
-### Camera
+### Data
 
-Camera authorization, device discovery, capture-session isolation, preview
-integration, photo capture, and video recording. AVFoundation types remain
-implementation details and must not appear in the public consumer API.
+Concrete integrations with system frameworks. `Data/Camera` owns camera
+authorization, device discovery, capture-session isolation, photo capture, and
+video recording. `Data/PhotoLibrary` owns PhotosPicker integration, filters,
+asynchronous item loading, and result conversion. AVFoundation, PhotosUI, and
+their related types remain implementation details.
 
-### PhotoLibrary
-
-PhotosPicker presentation, filters, asynchronous item loading, and conversion
-to domain results. PhotosUI and `PhotosPickerItem` remain implementation details.
+The camera state machine belongs to `Domain/Camera` because it expresses
+lifecycle rules without depending on AVFoundation.
 
 ### Presentation
 
@@ -43,22 +63,18 @@ Allowed dependencies are:
 
 ```text
 Presentation  -> Domain
-Presentation  -> Camera
-Presentation  -> PhotoLibrary
+Presentation  -> Data
 
-Camera        -> Domain
-Camera        -> Support
-
-PhotoLibrary  -> Domain
-PhotoLibrary  -> Support
+Data          -> Domain
+Data          -> Support
 
 Support       -> Domain (only when necessary)
 Domain        -> Foundation only
 ```
 
 Dependencies in the opposite direction are not allowed. In particular, Domain
-must not know about presentation or system capture frameworks, and Camera and
-PhotoLibrary must not depend on Presentation.
+must not know about Presentation or system capture frameworks, and Data must not
+depend on Presentation.
 
 ## Access control
 

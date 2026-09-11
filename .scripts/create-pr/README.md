@@ -58,6 +58,16 @@ create-pr claude
 create-pr gemini
 ```
 
+To create a Pull Request without requiring or linking a GitHub issue:
+
+```sh
+create-pr --no-issue
+create-pr codex --no-issue
+```
+
+The `--no-issue` option allows a branch without an issue number, skips issue
+validation, and leaves the Related Issues section empty.
+
 ## Branch targeting
 
 The base branch is selected automatically:
@@ -71,8 +81,8 @@ The base branch is selected automatically:
 This supports feature branches merging into `develop`, followed by release Pull
 Requests from `develop` into `master`.
 
-Branches targeting `develop` must include the related issue number immediately
-after the first slash:
+Unless `--no-issue` is used, branches targeting `develop` must include the
+related issue number immediately after the first slash:
 
 ```text
 feat/7-media-type
@@ -87,15 +97,17 @@ in the Pull Request body:
 Related issue: #7
 ```
 
-Release Pull Requests from `develop` to `master` do not require an issue number.
+Release Pull Requests from `develop` to `master` and Pull Requests created with
+`--no-issue` do not require an issue number.
 
 ## What the script does
 
 1. Runs the pinned SwiftLint configuration before any Pull Request preparation.
 2. Runs `swift test` and stops if linting, compilation, or any test fails.
 3. Validates Git, GitHub CLI authentication, and the selected AI CLI.
-4. Resolves the current branch, base branch, and related issue number.
-5. Validates that the related issue exists for branches targeting `develop`.
+4. Resolves the current branch, base branch, and optional related issue number.
+5. Validates the issue for branches targeting `develop`, unless `--no-issue`
+   is used.
 6. Requires a clean working tree and an `origin` remote.
 7. Fetches the base branch and verifies that the current branch has commits to
    propose.
@@ -104,7 +116,7 @@ Release Pull Requests from `develop` to `master` do not require an issue number.
 10. Collects commits, changed files, statistics, the Git diff, and the repository
    Pull Request template.
 11. Generates and validates a title and description with the selected AI.
-12. Inserts `Related issue: #N` into the Related Issues section.
+12. Inserts `Related issue: #N` when an issue is present.
 13. Shows the complete proposal and asks for confirmation.
 14. Creates the Pull Request with `gh pr create` after confirmation.
 
@@ -130,7 +142,8 @@ No Pull Request is created when:
 - `swift test` fails;
 - the working tree contains uncommitted changes;
 - the current branch is `master`;
-- a branch targeting `develop` does not follow `type/issue-description`;
+- a branch targeting `develop` does not follow `type/issue-description` and
+  `--no-issue` was not used;
 - the issue extracted from the branch does not exist or is inaccessible;
 - the branch contains no commits relative to its base;
 - an open Pull Request already exists for the same source and base;
