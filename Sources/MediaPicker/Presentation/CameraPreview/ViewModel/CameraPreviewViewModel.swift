@@ -24,6 +24,7 @@ final class CameraPreviewViewModel {
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
+    private var sessionUpdatesTask: Task<Void, Never>?
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
     private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
@@ -62,11 +63,19 @@ final class CameraPreviewViewModel {
     }
 
     func open() async throws {
-        let snapshot = try await openCameraUseCase.execute(position: initialPosition)
-        apply(snapshot)
+        observeSessionUpdates()
+
+        do {
+            let snapshot = try await openCameraUseCase.execute(position: initialPosition)
+            apply(snapshot)
+        } catch {
+            stopObservingSessionUpdates()
+            throw error
+        }
     }
 
     func close() async throws {
+        stopObservingSessionUpdates()
         let snapshot = try await closeCameraUseCase.execute()
         apply(snapshot)
     }
@@ -122,6 +131,23 @@ final class CameraPreviewViewModel {
 
 // MARK: Helper Methods
 extension CameraPreviewViewModel {
+
+    private func observeSessionUpdates() {
+        guard sessionUpdatesTask == nil else { return }
+
+        sessionUpdatesTask = Task { [weak self, updateCameraSessionUseCase] in
+            let updates = await updateCameraSessionUseCase.observe()
+
+            for await snapshot in updates where Task.isCancelled == false {
+                self?.apply(snapshot)
+            }
+        }
+    }
+
+    private func stopObservingSessionUpdates() {
+        sessionUpdatesTask?.cancel()
+        sessionUpdatesTask = nil
+    }
 
     private func concealPreviewForPrivacy() {
         withAnimation(

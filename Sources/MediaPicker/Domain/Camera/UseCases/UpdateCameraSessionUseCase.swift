@@ -26,4 +26,8 @@ struct UpdateCameraSessionUseCase: Sendable {
         return await cameraSession.snapshot()
     }
 
+    func observe() async -> AsyncStream<CameraSessionSnapshot> {
+        await cameraSession.updates()
+    }
+
 }

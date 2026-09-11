@@ -35,6 +35,7 @@ protocol CameraSessionControlling: Sendable {
 
     func setFlashMode(_ mode: CameraFlashMode) async throws
     func setTorchMode(_ mode: CameraTorchMode) async throws
+    func updates() async -> AsyncStream<CameraSessionSnapshot>
 
 }
 

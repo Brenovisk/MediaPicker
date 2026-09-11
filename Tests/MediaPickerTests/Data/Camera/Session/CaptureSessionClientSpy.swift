@@ -40,6 +40,9 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private(set) var switchedPositions: [CameraPosition] = []
     private(set) var preparedSwitchPositions: [CameraPosition] = []
     private(set) var selectedTorchModes: [CameraTorchMode] = []
+    private(set) var startObservingCount = 0
+    private(set) var stopObservingCount = 0
+    private var eventHandler: (@Sendable (CameraSessionEvent) -> Void)?
 
     init(
         operationDuration: TimeInterval = .zero,
@@ -62,7 +65,9 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
             prepareCameraSwitch: prepareCameraSwitch,
             switchCamera: switchCamera,
             lightingCapabilities: lightingCapabilities,
-            setTorchMode: setTorchMode
+            setTorchMode: setTorchMode,
+            startObservingEvents: startObservingEvents,
+            stopObservingEvents: stopObservingEvents
         )
     }
 
@@ -118,6 +123,26 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
         try performOperation(.setTorchMode) {
             selectedTorchModes.append(mode)
         }
+    }
+
+    func startObservingEvents(
+        _ handler: @escaping @Sendable (CameraSessionEvent) -> Void
+    ) {
+        lock.withLock {
+            startObservingCount += 1
+            eventHandler = handler
+        }
+    }
+
+    func stopObservingEvents() {
+        lock.withLock {
+            stopObservingCount += 1
+            eventHandler = nil
+        }
+    }
+
+    func send(_ event: CameraSessionEvent) {
+        lock.withLock { eventHandler }?(event)
     }
 
     private func performOperation(

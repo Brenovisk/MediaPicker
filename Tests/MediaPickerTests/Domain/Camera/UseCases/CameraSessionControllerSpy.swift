@@ -31,6 +31,8 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
     private(set) var lightingCapabilities: CameraLightingCapabilities
     private(set) var flashMode: CameraFlashMode
     private(set) var torchMode: CameraTorchMode
+    private let updateStream: AsyncStream<CameraSessionSnapshot>
+    private let updateContinuation: AsyncStream<CameraSessionSnapshot>.Continuation
 
     init(
         positions: [CameraPosition] = [],
@@ -41,6 +43,9 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         torchMode: CameraTorchMode = .off,
         failure: CameraSessionControllerOperation? = nil
     ) {
+        let updates = AsyncStream<CameraSessionSnapshot>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
         self.positions = positions
         self.state = state
         activeCameraPosition = activePosition
@@ -48,6 +53,8 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         self.flashMode = flashMode
         self.torchMode = torchMode
         self.failure = failure
+        updateStream = updates.stream
+        updateContinuation = updates.continuation
     }
 
     func open(for position: CameraPosition) throws {
@@ -87,6 +94,14 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
     func setTorchMode(_ mode: CameraTorchMode) throws {
         try record(.setTorchMode(mode))
         torchMode = mode
+    }
+
+    func updates() -> AsyncStream<CameraSessionSnapshot> {
+        updateStream
+    }
+
+    func send(_ snapshot: CameraSessionSnapshot) {
+        updateContinuation.yield(snapshot)
     }
 
     private func record(_ operation: CameraSessionControllerOperation) throws {
