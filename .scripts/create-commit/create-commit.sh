@@ -256,9 +256,15 @@ if git diff --cached --quiet; then
 fi
 
 STAGED_FILES=()
-while IFS= read -r file; do
-  STAGED_FILES+=("$file")
-done < <(git diff --cached --name-only --diff-filter=ACDMRTUXB)
+while IFS= read -r -d '' status; do
+  IFS= read -r -d '' first_path
+  STAGED_FILES+=("$first_path")
+
+  if [[ "$status" == R* || "$status" == C* ]]; then
+    IFS= read -r -d '' second_path
+    STAGED_FILES+=("$second_path")
+  fi
+done < <(git diff --cached --name-status -z --diff-filter=ACDMRTUXB)
 
 if [[ ${#STAGED_FILES[@]} -eq 0 ]]; then
   error "Unable to determine staged files."
@@ -445,6 +451,9 @@ If those changes are part of the same feature, they belong together.
 11. NEVER duplicate a file across commits.
 
 12. NEVER reference a file that is not included in CHANGED FILES.
+
+   For renamed or copied files, both the source and destination paths are valid.
+   Both paths from an R or C entry MUST belong to the same commit.
 
 13. If multiple logical changes exist inside the SAME file, keep that
 file in the commit representing its primary purpose.
