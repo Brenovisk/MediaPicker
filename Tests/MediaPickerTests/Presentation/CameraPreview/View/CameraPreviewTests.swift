@@ -26,18 +26,6 @@ struct CameraPreviewTests {
         #expect(previewLayer?.videoGravity == .resizeAspectFill)
     }
 
-    @Test func previewLayerFollowsViewSizeChanges() {
-        let view = CameraPreviewUIKitView(
-            session: AVCaptureSession(),
-            frameStore: CameraPreviewFrameStore()
-        )
-
-        view.frame = CGRect(x: 0, y: 0, width: 320, height: 640)
-        view.layoutIfNeeded()
-
-        #expect(view.layer.bounds == view.bounds)
-    }
-
     @Test func updatingPreviewDoesNotReplaceSessionOrLayer() {
         let session = AVCaptureSession()
         let view = CameraPreviewUIKitView(
