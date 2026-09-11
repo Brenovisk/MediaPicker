@@ -11,6 +11,7 @@ extension CaptureSessionOperations {
     static var live: CaptureSessionOperations {
         let previewSession = CaptureSessionReference()
         let eventObserver = CaptureSessionEventObserver()
+
         let storage = CaptureSessionStorage(
             session: previewSession.session,
             frameStore: previewSession.frameStore
@@ -26,6 +27,7 @@ extension CaptureSessionOperations {
             switchCamera: storage.switchCamera,
             lightingCapabilities: storage.lightingCapabilities,
             photoOutputCapabilities: storage.photoOutputCapabilities,
+            capturePhoto: storage.capturePhoto,
             setTorchMode: storage.setTorchMode,
             startObservingEvents: { handler in
                 eventObserver.start(session: previewSession.session, handler: handler)

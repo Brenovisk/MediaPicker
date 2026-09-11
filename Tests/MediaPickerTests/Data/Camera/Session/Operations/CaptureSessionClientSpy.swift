@@ -18,6 +18,7 @@ enum CaptureSessionClientOperation: Equatable {
     case start
     case stop
     case switchCamera
+    case capturePhoto
     case setTorchMode
 }
 
@@ -41,6 +42,8 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private(set) var switchedPositions: [CameraPosition] = []
     private(set) var preparedSwitchPositions: [CameraPosition] = []
     private(set) var selectedTorchModes: [CameraTorchMode] = []
+    private(set) var capturedFlashModes: [CameraFlashMode] = []
+    private(set) var captureCount = 0
     private(set) var startObservingCount = 0
     private(set) var stopObservingCount = 0
     private var eventHandler: (@Sendable (CameraSessionEvent) -> Void)?
@@ -69,6 +72,7 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
             switchCamera: switchCamera,
             lightingCapabilities: lightingCapabilities,
             photoOutputCapabilities: photoOutputCapabilities,
+            capturePhoto: capturePhoto,
             setTorchMode: setTorchMode,
             startObservingEvents: startObservingEvents,
             stopObservingEvents: stopObservingEvents
@@ -125,6 +129,26 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
 
     func photoOutputCapabilities() -> CameraPhotoOutputCapabilities {
         photoCapabilities
+    }
+
+    func capturePhoto(
+        flashMode: CameraFlashMode
+    ) async throws -> CameraPhotoCaptureRequest {
+        let requestID = lock.withLock { () -> Int64 in
+            captureCount += 1
+            capturedFlashModes.append(flashMode)
+            return Int64(captureCount)
+        }
+
+        if operationDuration > .zero {
+            try await Task.sleep(for: .seconds(operationDuration))
+        }
+
+        if let error, failingOperation == .all || failingOperation == .capturePhoto {
+            throw error
+        }
+
+        return CameraPhotoCaptureRequest(id: requestID)
     }
 
     func setTorchMode(_ mode: CameraTorchMode) throws {

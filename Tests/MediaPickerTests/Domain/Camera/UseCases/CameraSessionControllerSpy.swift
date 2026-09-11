@@ -17,6 +17,7 @@ enum CameraSessionControllerOperation: Equatable {
     case enteredBackground
     case enteredForeground
     case switchCamera
+    case capturePhoto
     case setFlashMode(CameraFlashMode)
     case setTorchMode(CameraTorchMode)
 }
@@ -33,6 +34,7 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
     private(set) var torchMode: CameraTorchMode
     private let updateStream: AsyncStream<CameraSessionSnapshot>
     private let updateContinuation: AsyncStream<CameraSessionSnapshot>.Continuation
+    private var nextPhotoRequestID: Int64 = 1
 
     init(
         positions: [CameraPosition] = [],
@@ -84,6 +86,12 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         let position = positions.removeFirst()
         activeCameraPosition = position
         return position
+    }
+
+    func capturePhoto() throws -> CameraPhotoCaptureRequest {
+        try record(.capturePhoto)
+        defer { nextPhotoRequestID += 1 }
+        return CameraPhotoCaptureRequest(id: nextPhotoRequestID)
     }
 
     func setFlashMode(_ mode: CameraFlashMode) throws {
