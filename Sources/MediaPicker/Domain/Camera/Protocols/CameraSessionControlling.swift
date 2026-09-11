@@ -32,7 +32,7 @@ protocol CameraSessionControlling: Sendable {
     func applicationWillEnterForeground() async throws
 
     func switchCamera() async throws -> CameraPosition
-    func capturePhoto() async throws -> CameraPhotoCaptureRequest
+    func capturePhoto(format: PhotoOutputFormat) async throws -> CapturedMedia
 
     func setFlashMode(_ mode: CameraFlashMode) async throws
     func setTorchMode(_ mode: CameraTorchMode) async throws
