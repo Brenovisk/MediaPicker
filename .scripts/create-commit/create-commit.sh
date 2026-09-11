@@ -7,6 +7,8 @@ set -euo pipefail
 # ---------------------------------------------------------
 
 MAX_DIFF_CHARS=100000
+AI_PROVIDER_OPTION=""
+SKIP_ISSUE=false
 
 # ---------------------------------------------------------
 # Helpers
@@ -33,6 +35,40 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+usage() {
+  cat <<'EOF'
+Usage: create-commit [claude|codex|gemini] [--no-issue]
+
+Options:
+  --no-issue  Create commits without requiring an issue-number scope.
+  -h, --help  Show this help message.
+EOF
+}
+
+parse_arguments() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      claude|codex|gemini)
+        [[ -z "$AI_PROVIDER_OPTION" ]] ||
+          error "Only one AI provider can be selected."
+        AI_PROVIDER_OPTION="$1"
+        ;;
+      --no-issue)
+        SKIP_ISSUE=true
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        error "Unknown option: $1. Run 'create-commit --help' for usage."
+        ;;
+    esac
+
+    shift
+  done
+}
+
 cleanup() {
   rm -f \
     "${PROMPT_FILE:-}" \
@@ -42,6 +78,8 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+parse_arguments "$@"
 
 # ---------------------------------------------------------
 # AI Provider Selection
@@ -169,7 +207,7 @@ success "SwiftLint passed."
 # Select AI Provider
 # ---------------------------------------------------------
 
-select_ai_provider "${1:-}"
+select_ai_provider "$AI_PROVIDER_OPTION"
 
 validate_ai_provider
 
@@ -182,7 +220,9 @@ CURRENT_BRANCH=$(git branch --show-current)
 [[ -n "$CURRENT_BRANCH" ]] ||
   error "Unable to determine the current Git branch."
 
-if [[ "$CURRENT_BRANCH" == "develop" || "$CURRENT_BRANCH" == "master" ]]; then
+if [[ "$SKIP_ISSUE" == true ]]; then
+  ISSUE_NUMBER=""
+elif [[ "$CURRENT_BRANCH" == "develop" || "$CURRENT_BRANCH" == "master" ]]; then
   echo ""
   read -r -p "Issue number: " ISSUE_NUMBER
 
@@ -197,6 +237,14 @@ elif [[ "$CURRENT_BRANCH" =~ ^[^/]+/([0-9]+)([-/].*)?$ ]]; then
   info "Using issue #$ISSUE_NUMBER from branch $CURRENT_BRANCH."
 else
   error "Branch must follow the format type/issue-description (example: feat/7-media-type)."
+fi
+
+if [[ -n "$ISSUE_NUMBER" ]]; then
+  COMMIT_SCOPE="($ISSUE_NUMBER)"
+  ISSUE_RULE="The issue number for every commit MUST be: $ISSUE_NUMBER"
+else
+  COMMIT_SCOPE=""
+  ISSUE_RULE="Do not add an issue number or an empty scope to any commit."
 fi
 
 # ---------------------------------------------------------
@@ -318,17 +366,17 @@ COMMIT MESSAGE FORMAT
 
 Every commit MUST follow exactly:
 
-type($ISSUE_NUMBER): emoji description
+type$COMMIT_SCOPE: emoji description
 
 Examples:
 
-chore($ISSUE_NUMBER): 🧹 ignore generated local files
-feat($ISSUE_NUMBER): ✨ add camera authorization handling
-fix($ISSUE_NUMBER): 🐛 handle denied camera permission
-test($ISSUE_NUMBER): ✅ add camera state tests
-docs($ISSUE_NUMBER): 📝 document package installation
-refactor($ISSUE_NUMBER): ♻️ extract camera session abstraction
-ci($ISSUE_NUMBER): 👷 add package test workflow
+chore$COMMIT_SCOPE: 🧹 ignore generated local files
+feat$COMMIT_SCOPE: ✨ add camera authorization handling
+fix$COMMIT_SCOPE: 🐛 handle denied camera permission
+test$COMMIT_SCOPE: ✅ add camera state tests
+docs$COMMIT_SCOPE: 📝 document package installation
+refactor$COMMIT_SCOPE: ♻️ extract camera session abstraction
+ci$COMMIT_SCOPE: 👷 add package test workflow
 
 ============================================================
 ALLOWED TYPES
@@ -349,9 +397,7 @@ style
 RULES
 ============================================================
 
-1. The issue number MUST always be:
-
-$ISSUE_NUMBER
+1. $ISSUE_RULE
 
 2. Every commit MUST contain exactly one emoji after the colon.
 
@@ -376,19 +422,19 @@ $ISSUE_NUMBER
 
 Good split:
 
-chore($ISSUE_NUMBER): 🧹 ignore generated local files
+chore$COMMIT_SCOPE: 🧹 ignore generated local files
 
-test($ISSUE_NUMBER): ✅ add initial package tests
+test$COMMIT_SCOPE: ✅ add initial package tests
 
-docs($ISSUE_NUMBER): 📝 document package setup
+docs$COMMIT_SCOPE: 📝 document package setup
 
 Bad split:
 
-feat($ISSUE_NUMBER): ✨ add camera enum
+feat$COMMIT_SCOPE: ✨ add camera enum
 
-feat($ISSUE_NUMBER): ✨ add camera protocol
+feat$COMMIT_SCOPE: ✨ add camera protocol
 
-feat($ISSUE_NUMBER): ✨ add camera implementation
+feat$COMMIT_SCOPE: ✨ add camera implementation
 
 If those changes are part of the same feature, they belong together.
 
@@ -620,7 +666,7 @@ for ((i = 0; i < COMMIT_COUNT; i++)); do
   EMOJI=$(jq -r ".commits[$i].emoji" "$PLAN_FILE")
   DESCRIPTION=$(jq -r ".commits[$i].description" "$PLAN_FILE")
 
-  MESSAGE="$TYPE($ISSUE_NUMBER): $EMOJI $DESCRIPTION"
+  MESSAGE="$TYPE$COMMIT_SCOPE: $EMOJI $DESCRIPTION"
 
   echo "$((i + 1)). $MESSAGE"
   echo ""
@@ -668,7 +714,7 @@ for ((i = 0; i < COMMIT_COUNT; i++)); do
   EMOJI=$(jq -r ".commits[$i].emoji" "$PLAN_FILE")
   DESCRIPTION=$(jq -r ".commits[$i].description" "$PLAN_FILE")
 
-  MESSAGE="$TYPE($ISSUE_NUMBER): $EMOJI $DESCRIPTION"
+  MESSAGE="$TYPE$COMMIT_SCOPE: $EMOJI $DESCRIPTION"
 
   COMMIT_FILES=()
   while IFS= read -r file; do

@@ -56,6 +56,16 @@ create-commit claude
 create-commit gemini
 ```
 
+To create commits without associating them with an issue:
+
+```sh
+create-commit --no-issue
+create-commit codex --no-issue
+```
+
+The `--no-issue` option skips branch issue-number validation and generates
+messages such as `fix: 🐛 correct camera orientation`.
+
 On feature branches, the script extracts the issue number automatically from
 the branch name:
 
@@ -66,10 +76,12 @@ chore/5-contribution-conventions
 ```
 
 These branches produce commit scopes `(7)`, `(14)`, and `(5)`, respectively.
-Branches other than `develop` and `master` must follow this convention.
+Branches other than `develop` and `master` must follow this convention unless
+`--no-issue` is used.
 
 On `develop` or `master`, the script asks for the issue number because those
 branch names do not identify one. Both `4` and `#4` are accepted when prompted.
+With `--no-issue`, that prompt is skipped.
 
 ## Commit format
 
@@ -85,6 +97,12 @@ Example:
 ci(4): 👷 add package validation workflow
 ```
 
+Without an issue, the empty scope is omitted:
+
+```text
+ci: 👷 add package validation workflow
+```
+
 Supported types are `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`,
 `build`, `perf`, and `style`.
 
@@ -92,9 +110,8 @@ Supported types are `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`,
 
 1. Validates Git, `jq`, and the repository, then runs the pinned SwiftLint
    configuration and stops if linting fails.
-2. Validates the selected AI CLI and extracts the issue number from the branch,
-   or requests it on `develop` and
-   `master`.
+2. Validates the selected AI CLI and resolves the optional issue number from
+   the branch or prompt.
 3. Reads only the staged files and staged diff.
 4. Rejects files that contain both staged and unstaged changes.
 5. Asks the AI provider to produce one logical commit or a small set of
