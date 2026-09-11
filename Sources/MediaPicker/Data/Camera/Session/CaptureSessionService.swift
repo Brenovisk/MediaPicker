@@ -22,16 +22,21 @@ actor CaptureSessionService: CameraSessionControlling {
     nonisolated private let executor: DispatchSerialQueue
     nonisolated let previewSession: CaptureSessionReference?
 
-    private let operations: CaptureSessionOperations
-    private var stateMachine = CameraStateMachine()
+    let operations: CaptureSessionOperations
+    let updateStream: AsyncStream<CameraSessionSnapshot>
+    let updateContinuation: AsyncStream<CameraSessionSnapshot>.Continuation
+
+    var stateMachine = CameraStateMachine()
     private var configuredPosition: CameraPosition?
 
     private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
     private(set) var flashMode: CameraFlashMode = .off
     private(set) var torchMode: CameraTorchMode = .off
 
-    private var isPickerActive = false
-    private var isSessionRunning = false
+    var isPickerActive = false
+    var isSessionRunning = false
+    var isObservingEvents = false
+    private var didAttemptRecovery = false
 
     var state: CameraState {
         stateMachine.state
@@ -50,11 +55,24 @@ actor CaptureSessionService: CameraSessionControlling {
     }
 
     init(operations: CaptureSessionOperations = .live) {
+        let updates = AsyncStream<CameraSessionSnapshot>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
+
         executor = DispatchSerialQueue(
             label: MediaPickerInfrastructureConstants.captureSessionQueueLabel
         )
+
         previewSession = operations.previewSession
         self.operations = operations
+
+        updateStream = updates.stream
+        updateContinuation = updates.continuation
+    }
+
+    deinit {
+        operations.stopObservingEvents()
+        updateContinuation.finish()
     }
 
     func configure(for position: CameraPosition) throws {
@@ -76,21 +94,30 @@ actor CaptureSessionService: CameraSessionControlling {
 
     func open(for position: CameraPosition) throws {
         isPickerActive = true
+        startObservingEvents()
 
-        switch state {
-        case .ready:
-            return
-        case .suspended:
-            try resumeSession()
-        case .idle, .failed:
-            try prepareSession(for: position)
-        case .preparing, .capturingPhoto, .recording, .stoppingRecording:
-            throw CameraStateTransitionError(state: state, event: .prepare)
+        do {
+            switch state {
+            case .ready:
+                return
+            case .suspended:
+                try resumeSession()
+            case .idle, .failed:
+                try prepareSession(for: position)
+            case .interrupted, .preparing, .capturingPhoto,
+                 .recording, .stoppingRecording:
+                throw CameraStateTransitionError(state: state, event: .prepare)
+            }
+        } catch {
+            stopObservingEvents()
+            throw error
         }
     }
 
     func close() throws {
         isPickerActive = false
+        stopObservingEvents()
+        didAttemptRecovery = false
 
         guard requiresClosing else { return }
 
@@ -162,6 +189,25 @@ actor CaptureSessionService: CameraSessionControlling {
 
 // MARK: Helper Methods
 extension CaptureSessionService {
+
+    func recoverFromMediaServicesReset() {
+        guard didAttemptRecovery == false, let position = configuredPosition else {
+            try? stateMachine.handle(.fail(.mediaServicesResetRecoveryFailed))
+            return
+        }
+
+        didAttemptRecovery = true
+        isSessionRunning = false
+        try? stateMachine.handle(.fail(.captureSessionRuntimeFailed))
+        try? stateMachine.handle(.reset)
+        resetSession()
+
+        do {
+            try prepareSession(for: position)
+        } catch {
+            try? stateMachine.handle(.fail(.mediaServicesResetRecoveryFailed))
+        }
+    }
 
     private var requiresClosing: Bool {
         state != .idle || configuredPosition != nil || isSessionRunning

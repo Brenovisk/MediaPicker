@@ -10,6 +10,7 @@ enum CameraState: Sendable, Equatable {
     case preparing
     case ready
     case suspended
+    case interrupted(CameraSessionEvent.InterruptionReason)
     case capturingPhoto
     case recording
     case stoppingRecording

@@ -53,6 +53,18 @@ public enum MediaPickerError: Error, Sendable, Equatable, Hashable {
     /// Locking or configuring the active camera device failed.
     case cameraDeviceConfigurationFailed
 
+    /// Another application or system service is using the camera.
+    case cameraInUse
+
+    /// The active camera became unavailable or disconnected.
+    case cameraUnavailable
+
+    /// AVFoundation reported an unclassified runtime failure.
+    case captureSessionRuntimeFailed
+
+    /// Automatic reset recovery failed or was already attempted.
+    case mediaServicesResetRecoveryFailed
+
     /// Loading selected content from the photo library failed.
     case photoLibraryLoadingFailed
 
@@ -91,6 +103,14 @@ extension MediaPickerError: LocalizedError {
             MediaPickerConstants.Text.unsupportedTorchMode.value
         case .cameraDeviceConfigurationFailed:
             MediaPickerConstants.Text.cameraDeviceConfigurationFailed.value
+        case .cameraInUse:
+            MediaPickerConstants.Text.cameraInUse.value
+        case .cameraUnavailable:
+            MediaPickerConstants.Text.cameraUnavailable.value
+        case .captureSessionRuntimeFailed:
+            MediaPickerConstants.Text.captureSessionRuntimeFailed.value
+        case .mediaServicesResetRecoveryFailed:
+            MediaPickerConstants.Text.mediaServicesResetRecoveryFailed.value
         case .photoLibraryLoadingFailed:
             MediaPickerConstants.Text.photoLibraryLoadingFailed.value
         case .unsupportedFormat:

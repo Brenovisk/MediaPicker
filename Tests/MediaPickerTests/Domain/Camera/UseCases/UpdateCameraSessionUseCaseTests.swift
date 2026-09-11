@@ -39,4 +39,23 @@ struct UpdateCameraSessionUseCaseTests {
         }
     }
 
+    @Test func observationForwardsAsynchronousSessionState() async {
+        let controller = CameraSessionControllerSpy()
+        let useCase = UpdateCameraSessionUseCase(cameraSession: controller)
+        let expected = CameraSessionSnapshot(
+            state: .interrupted(.systemPressure),
+            position: .back,
+            lightingCapabilities: .unavailable,
+            flashMode: .off,
+            torchMode: .off
+        )
+        let updates = await useCase.observe()
+
+        await controller.send(expected)
+        let received = await updates.first(where: { _ in true })
+
+        #expect(received?.state == expected.state)
+        #expect(received?.position == expected.position)
+    }
+
 }

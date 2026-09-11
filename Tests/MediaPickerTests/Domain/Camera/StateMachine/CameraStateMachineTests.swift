@@ -39,6 +39,16 @@ struct CameraStateMachineTests {
         #expect(stateMachine.state == .ready)
     }
 
+    @Test func interruptedCameraReturnsToReadyWhenInterruptionEnds() throws {
+        var stateMachine = try readyStateMachine()
+
+        try stateMachine.handle(.interruptionBegan(.cameraInUse))
+        #expect(stateMachine.state == .interrupted(.cameraInUse))
+
+        try stateMachine.handle(.interruptionEnded)
+        #expect(stateMachine.state == .ready)
+    }
+
     @Test func recordingStopsBeforeReturningCameraToReady() throws {
         var stateMachine = try readyStateMachine()
 

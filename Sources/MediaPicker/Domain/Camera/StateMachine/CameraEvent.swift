@@ -4,6 +4,8 @@ enum CameraEvent: Sendable, Equatable {
     case preparationSucceeded
     case suspend
     case resume
+    case interruptionBegan(CameraSessionEvent.InterruptionReason)
+    case interruptionEnded
     case capturePhoto
     case photoCaptured
     case startRecording

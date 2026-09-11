@@ -5,6 +5,7 @@
 
  - `idle -> preparing -> ready`
  - `ready -> suspended -> ready` while the app backgrounds and foregrounds
+ - active camera states may become interrupted and return to `ready`
  - `ready -> capturingPhoto -> ready`
  - `ready -> recording -> stoppingRecording -> ready`
  - `preparing|ready|capturingPhoto|recording|stoppingRecording -> failed`
@@ -34,6 +35,14 @@ struct CameraStateMachine: Sendable {
     }
 
     private func nominalState(for event: CameraEvent) throws -> CameraState {
+        if let interruptionState = interruptionState(for: event) {
+            return interruptionState
+        }
+
+        if let captureState = captureState(for: event) {
+            return captureState
+        }
+
         switch (state, event) {
         case (.idle, .prepare), (.failed, .prepare):
             return .preparing
@@ -41,8 +50,31 @@ struct CameraStateMachine: Sendable {
             return .ready
         case (.ready, .suspend):
             return .suspended
+        case (.interrupted, .suspend):
+            return .suspended
         case (.suspended, .resume):
             return .ready
+        default:
+            throw CameraStateTransitionError(state: state, event: event)
+        }
+    }
+
+    private func interruptionState(for event: CameraEvent) -> CameraState? {
+        switch (state, event) {
+        case let (.ready, .interruptionBegan(reason)),
+             let (.capturingPhoto, .interruptionBegan(reason)),
+             let (.recording, .interruptionBegan(reason)),
+             let (.stoppingRecording, .interruptionBegan(reason)):
+            return .interrupted(reason)
+        case (.interrupted, .interruptionEnded):
+            return .ready
+        default:
+            return nil
+        }
+    }
+
+    private func captureState(for event: CameraEvent) -> CameraState? {
+        switch (state, event) {
         case (.ready, .capturePhoto):
             return .capturingPhoto
         case (.capturingPhoto, .photoCaptured):
@@ -54,7 +86,7 @@ struct CameraStateMachine: Sendable {
         case (.stoppingRecording, .recordingStopped):
             return .ready
         default:
-            throw CameraStateTransitionError(state: state, event: event)
+            return nil
         }
     }
 
@@ -63,16 +95,17 @@ struct CameraStateMachine: Sendable {
         event: CameraEvent
     ) throws -> CameraState {
         switch state {
-        case .preparing, .ready, .suspended, .capturingPhoto, .recording, .stoppingRecording:
+        case .preparing, .ready, .suspended, .interrupted, .failed,
+             .capturingPhoto, .recording, .stoppingRecording:
             return .failed(error)
-        case .idle, .failed:
+        case .idle:
             throw CameraStateTransitionError(state: state, event: event)
         }
     }
 
     private func resetState(for event: CameraEvent) throws -> CameraState {
         switch state {
-        case .preparing, .ready, .suspended, .failed:
+        case .preparing, .ready, .suspended, .interrupted, .failed:
             return .idle
         case .idle, .capturingPhoto, .recording, .stoppingRecording:
             throw CameraStateTransitionError(state: state, event: event)

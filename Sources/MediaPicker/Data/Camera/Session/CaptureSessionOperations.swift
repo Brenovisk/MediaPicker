@@ -15,28 +15,42 @@
 */
 struct CaptureSessionOperations: Sendable {
 
+    typealias ThrowingPositionCommand = @Sendable (CameraPosition) throws -> Void
+    typealias SessionCommand = @Sendable () -> Void
+    typealias ThrowingSessionCommand = @Sendable () throws -> Void
+    typealias PositionCommand = @Sendable (CameraPosition) -> Void
+    typealias LightingProvider = @Sendable () -> CameraLightingCapabilities
+    typealias TorchCommand = @Sendable (CameraTorchMode) throws -> Void
+    typealias EventHandler = @Sendable (CameraSessionEvent) -> Void
+    typealias EventObserver = @Sendable (@escaping EventHandler) -> Void
+
     let previewSession: CaptureSessionReference?
-    let configure: @Sendable (CameraPosition) throws -> Void
-    let reset: @Sendable () -> Void
-    let startRunning: @Sendable () throws -> Void
-    let stopRunning: @Sendable () throws -> Void
-    let prepareCameraSwitch: @Sendable (CameraPosition) -> Void
-    let switchCamera: @Sendable (CameraPosition) throws -> Void
-    let lightingCapabilities: @Sendable () -> CameraLightingCapabilities
-    let setTorchMode: @Sendable (CameraTorchMode) throws -> Void
+
+    let configure: ThrowingPositionCommand
+    let reset: SessionCommand
+    let startRunning: ThrowingSessionCommand
+    let stopRunning: ThrowingSessionCommand
+
+    let prepareCameraSwitch: PositionCommand
+    let switchCamera: ThrowingPositionCommand
+    let lightingCapabilities: LightingProvider
+    let setTorchMode: TorchCommand
+
+    let startObservingEvents: EventObserver
+    let stopObservingEvents: SessionCommand
 
     init(
         previewSession: CaptureSessionReference? = nil,
-        configure: @escaping @Sendable (CameraPosition) throws -> Void,
-        reset: @escaping @Sendable () -> Void,
-        startRunning: @escaping @Sendable () throws -> Void,
-        stopRunning: @escaping @Sendable () throws -> Void,
-        prepareCameraSwitch: @escaping @Sendable (CameraPosition) -> Void,
-        switchCamera: @escaping @Sendable (CameraPosition) throws -> Void,
-        lightingCapabilities: @escaping @Sendable () -> CameraLightingCapabilities = {
-            .unavailable
-        },
-        setTorchMode: @escaping @Sendable (CameraTorchMode) throws -> Void = { _ in }
+        configure: @escaping ThrowingPositionCommand,
+        reset: @escaping SessionCommand,
+        startRunning: @escaping ThrowingSessionCommand,
+        stopRunning: @escaping ThrowingSessionCommand,
+        prepareCameraSwitch: @escaping PositionCommand,
+        switchCamera: @escaping ThrowingPositionCommand,
+        lightingCapabilities: @escaping LightingProvider = { .unavailable },
+        setTorchMode: @escaping TorchCommand = { _ in },
+        startObservingEvents: @escaping EventObserver = { _ in },
+        stopObservingEvents: @escaping SessionCommand = {}
     ) {
         self.previewSession = previewSession
         self.configure = configure
@@ -47,6 +61,8 @@ struct CaptureSessionOperations: Sendable {
         self.switchCamera = switchCamera
         self.lightingCapabilities = lightingCapabilities
         self.setTorchMode = setTorchMode
+        self.startObservingEvents = startObservingEvents
+        self.stopObservingEvents = stopObservingEvents
     }
 
 }

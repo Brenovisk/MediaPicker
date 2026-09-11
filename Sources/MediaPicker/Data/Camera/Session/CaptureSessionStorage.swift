@@ -11,6 +11,7 @@ extension CaptureSessionOperations {
 
     static var live: CaptureSessionOperations {
         let previewSession = CaptureSessionReference()
+        let eventObserver = CaptureSessionEventObserver()
 
         let storage = CaptureSessionStorage(
             session: previewSession.session,
@@ -26,7 +27,11 @@ extension CaptureSessionOperations {
             prepareCameraSwitch: storage.prepareCameraSwitch,
             switchCamera: storage.switchCamera,
             lightingCapabilities: storage.lightingCapabilities,
-            setTorchMode: storage.setTorchMode
+            setTorchMode: storage.setTorchMode,
+            startObservingEvents: { handler in
+                eventObserver.start(session: previewSession.session, handler: handler)
+            },
+            stopObservingEvents: eventObserver.stop
         )
     }
 
@@ -77,6 +82,7 @@ private final class CaptureSessionStorage: @unchecked Sendable {
     }
 
     func startRunning() {
+        enableMultitaskingCameraAccessIfSupported()
         session.startRunning()
     }
 
@@ -150,6 +156,13 @@ private final class CaptureSessionStorage: @unchecked Sendable {
 
 // MARK: Helper Methods
 extension CaptureSessionStorage {
+
+    private func enableMultitaskingCameraAccessIfSupported() {
+    #if os(iOS) && !targetEnvironment(macCatalyst)
+        guard session.isMultitaskingCameraAccessSupported else { return }
+        session.isMultitaskingCameraAccessEnabled = true
+    #endif
+    }
 
     private func configureSession(with videoInput: AVCaptureDeviceInput) throws {
         session.beginConfiguration()
