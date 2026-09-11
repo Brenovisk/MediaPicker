@@ -11,7 +11,7 @@ import SwiftUI
 struct CameraPreviewRepresentable: UIViewRepresentable {
 
     let previewSession: CaptureSessionReference
-    let isMirrored: Bool
+    let cameraPosition: CameraPosition
     let surface: CameraPreviewSurface
 
     func makeUIView(context: Context) -> CameraPreviewUIKitView {
@@ -20,13 +20,12 @@ struct CameraPreviewRepresentable: UIViewRepresentable {
             frameStore: previewSession.frameStore
         )
         surface.attach(view)
-        view.setMirroring(isMirrored)
+        view.setCameraPosition(cameraPosition)
         return view
     }
 
     func updateUIView(_ view: CameraPreviewUIKitView, context: Context) {
-        view.setMirroring(isMirrored)
-        view.updateVideoOrientation()
+        view.setCameraPosition(cameraPosition)
     }
 
     static func dismantleUIView(_ view: CameraPreviewUIKitView, coordinator: Void) {

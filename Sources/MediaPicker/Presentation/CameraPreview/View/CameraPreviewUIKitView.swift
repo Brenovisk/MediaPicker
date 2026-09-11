@@ -14,6 +14,9 @@ import UIKit
 final class CameraPreviewUIKitView: UIView {
 
     private(set) var isMirrored = false
+    private var cameraPosition: CameraPosition = .back
+    private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    private var rotationObservation: NSKeyValueObservation?
     private let frameStore: CameraPreviewFrameStore
     private let imageContext = CIContext(options: [.cacheIntermediates: false])
     private weak var frozenFrame: UIImageView?
@@ -30,6 +33,15 @@ final class CameraPreviewUIKitView: UIView {
 
     var latestFrameSequence: UInt64? {
         frameStore.latestFrame?.sequence
+    }
+
+    var rotationAngles: CameraRotationAngles {
+        guard let rotationCoordinator else { return .zero }
+
+        return CameraRotationAngles(
+            preview: rotationCoordinator.videoRotationAngleForHorizonLevelPreview,
+            capture: rotationCoordinator.videoRotationAngleForHorizonLevelCapture
+        )
     }
 
     init(session: AVCaptureSession, frameStore: CameraPreviewFrameStore) {
@@ -51,25 +63,22 @@ final class CameraPreviewUIKitView: UIView {
     }
 
     func updateVideoOrientation() {
-        guard
-            let connection = previewLayer?.connection,
-            let orientation = window?.windowScene?.interfaceOrientation
-        else { return }
-
-        let angle = CameraPreviewOrientation.rotationAngle(for: orientation)
-        guard connection.isVideoRotationAngleSupported(angle) else { return }
-        connection.videoRotationAngle = angle
+        refreshRotationCoordinator()
+        applyRotationAngle()
     }
 
-    func setMirroring(_ isMirrored: Bool) {
-        self.isMirrored = isMirrored
+    func setCameraPosition(_ position: CameraPosition) {
+        cameraPosition = position
+        isMirrored = position == .front
         applyMirroring()
+        updateVideoOrientation()
     }
 
     @discardableResult
     func freezeCurrentFrame() -> UInt64? {
         guard frozenFrame == nil else { return latestFrameSequence }
 
+        updateVideoOrientation()
         guard let frame = frameStore.latestFrame else { return nil }
         let sourceImage = CIImage(cvPixelBuffer: frame.pixelBuffer)
 
@@ -108,19 +117,75 @@ final class CameraPreviewUIKitView: UIView {
         connection.isVideoMirrored = isMirrored
     }
 
-    private var frozenFrameOrientation: UIImage.Orientation {
-        switch window?.windowScene?.interfaceOrientation {
-        case .landscapeLeft:
-            isMirrored ? .downMirrored : .up
-        case .landscapeRight:
-            isMirrored ? .upMirrored : .down
-        case .portraitUpsideDown:
-            isMirrored ? .rightMirrored : .left
-        case .portrait, .unknown, nil:
-            isMirrored ? .leftMirrored : .right
-        @unknown default:
-            isMirrored ? .leftMirrored : .right
+    private var activeCamera: AVCaptureDevice? {
+        previewLayer?.session?.inputs
+            .compactMap { $0 as? AVCaptureDeviceInput }
+            .first?.device
+    }
+
+    private func refreshRotationCoordinator() {
+        guard let activeCamera,
+              rotationCoordinator?.device !== activeCamera else { return }
+
+        observeRotationChanges(for: activeCamera)
+    }
+
+    private func observeRotationChanges(for camera: AVCaptureDevice) {
+        guard let previewLayer else { return }
+
+        rotationObservation = nil
+        let coordinator = AVCaptureDevice.RotationCoordinator(
+            device: camera,
+            previewLayer: previewLayer
+        )
+        rotationCoordinator = coordinator
+        rotationObservation = coordinator.observe(
+            \.videoRotationAngleForHorizonLevelPreview,
+            options: [.initial, .new]
+        ) { [weak self] _, _ in
+            MainActor.assumeIsolated {
+                self?.applyRotationAngle()
+            }
         }
+    }
+
+    private func applyRotationAngle() {
+        let angle = CGFloat(rotationAngles.preview)
+
+        guard let connection = previewLayer?.connection,
+              rotationCoordinator != nil,
+              connection.isVideoRotationAngleSupported(angle) else { return }
+
+        connection.videoRotationAngle = angle
+    }
+
+    private var frozenFrameOrientation: UIImage.Orientation {
+        let angle = rotationAngles.preview
+        return Self.imageOrientation(rotationAngle: angle, mirrored: isMirrored)
+    }
+
+    static func imageOrientation(
+        rotationAngle: Double,
+        mirrored: Bool
+    ) -> UIImage.Orientation {
+        switch normalizedQuarterTurn(for: rotationAngle) {
+        case 90:
+            return mirrored ? .leftMirrored : .right
+        case 180:
+            return mirrored ? .downMirrored : .down
+        case 270:
+            return mirrored ? .rightMirrored : .left
+        default:
+            return mirrored ? .upMirrored : .up
+        }
+    }
+
+    private static func normalizedQuarterTurn(for angle: Double) -> Int {
+        let normalizedAngle = angle.truncatingRemainder(dividingBy: 360)
+        let positiveAngle = normalizedAngle < 0
+            ? normalizedAngle + 360
+            : normalizedAngle
+        return Int((positiveAngle / 90).rounded()) * 90 % 360
     }
 
 }

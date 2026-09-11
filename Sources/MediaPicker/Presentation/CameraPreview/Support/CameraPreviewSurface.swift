@@ -42,6 +42,11 @@ final class CameraPreviewSurface: CameraFrameReadinessProviding {
         previewView?.latestFrameSequence
     }
 
+    /** Current preview and capture angles without exposing AVFoundation. */
+    var rotationAngles: CameraRotationAngles {
+        previewView?.rotationAngles ?? .zero
+    }
+
     func waitForFrame(after sequence: UInt64?) async -> Bool {
         guard let previewView else { return true }
 

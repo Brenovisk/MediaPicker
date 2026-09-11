@@ -25,7 +25,7 @@ public struct CameraPreview: View {
             if let previewSession = viewModel.previewSession {
                 CameraPreviewRepresentable(
                     previewSession: previewSession,
-                    isMirrored: viewModel.activePosition == .front,
+                    cameraPosition: viewModel.activePosition,
                     surface: viewModel.previewSurface
                 )
             }
