@@ -14,8 +14,8 @@ struct CapturePhotoUseCase: Sendable {
         self.cameraSession = cameraSession
     }
 
-    func execute() async throws -> CameraPhotoCaptureRequest {
-        try await cameraSession.capturePhoto()
+    func execute(format: PhotoOutputFormat) async throws -> CapturedMedia {
+        try await cameraSession.capturePhoto(format: format)
     }
 
 }

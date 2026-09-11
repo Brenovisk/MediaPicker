@@ -14,18 +14,19 @@ struct CapturePhotoUseCaseTests {
         let controller = CameraSessionControllerSpy()
         let useCase = CapturePhotoUseCase(cameraSession: controller)
 
-        let request = try await useCase.execute()
+        let media = try await useCase.execute(format: .png)
 
-        #expect(request.id == 1)
-        #expect(await controller.operations == [.capturePhoto])
+        #expect(media.mediaType == .photo)
+        #expect(media.source == .camera)
+        #expect(await controller.operations == [.capturePhoto(.png)])
     }
 
     @Test func propagatesCaptureFailure() async {
-        let controller = CameraSessionControllerSpy(failure: .capturePhoto)
+        let controller = CameraSessionControllerSpy(failure: .capturePhoto(.jpeg))
         let useCase = CapturePhotoUseCase(cameraSession: controller)
 
         await #expect(throws: CameraSessionControllerSpyError.failure) {
-            try await useCase.execute()
+            try await useCase.execute(format: .jpeg)
         }
     }
 

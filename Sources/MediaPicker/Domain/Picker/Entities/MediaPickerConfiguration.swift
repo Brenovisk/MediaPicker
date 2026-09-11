@@ -19,12 +19,14 @@ public struct MediaPickerConfiguration: Sendable, Equatable {
     public let sources: MediaSource
     public let mediaTypes: MediaType
     public let initialCameraPosition: CameraPosition
+    public let photoOutputFormat: PhotoOutputFormat
     public let maximumVideoDuration: TimeInterval?
 
     public init() {
         sources = .cameraAndPhotoLibrary
         mediaTypes = .photoAndVideo
         initialCameraPosition = .back
+        photoOutputFormat = .jpeg
         maximumVideoDuration = nil
     }
 
@@ -38,6 +40,7 @@ public struct MediaPickerConfiguration: Sendable, Equatable {
        - sources: One or more enabled media sources.
        - mediaTypes: One or more accepted media types.
        - initialCameraPosition: The preferred initial camera. Defaults to back.
+       - photoOutputFormat: The captured-photo format. Defaults to JPEG.
        - maximumVideoDuration: An optional positive, finite duration in seconds.
          `nil` means that MediaPicker does not impose a duration limit.
     */
@@ -45,6 +48,7 @@ public struct MediaPickerConfiguration: Sendable, Equatable {
         sources: MediaSource,
         mediaTypes: MediaType,
         initialCameraPosition: CameraPosition = .back,
+        photoOutputFormat: PhotoOutputFormat = .jpeg,
         maximumVideoDuration: TimeInterval? = nil
     ) throws {
         try Self.validateStaticValues(
@@ -56,6 +60,7 @@ public struct MediaPickerConfiguration: Sendable, Equatable {
         self.sources = sources
         self.mediaTypes = mediaTypes
         self.initialCameraPosition = initialCameraPosition
+        self.photoOutputFormat = photoOutputFormat
         self.maximumVideoDuration = maximumVideoDuration
     }
 

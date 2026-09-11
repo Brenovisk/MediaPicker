@@ -9,6 +9,7 @@ struct MediaPickerConfigurationTests {
         #expect(configuration.sources == .cameraAndPhotoLibrary)
         #expect(configuration.mediaTypes == .photoAndVideo)
         #expect(configuration.initialCameraPosition == .back)
+        #expect(configuration.photoOutputFormat == .jpeg)
         #expect(configuration.maximumVideoDuration == nil)
     }
 
@@ -40,6 +41,16 @@ struct MediaPickerConfigurationTests {
         )
 
         #expect(configuration.maximumVideoDuration == 30)
+    }
+
+    @Test func photoOutputFormatIsConfigurable() throws {
+        let configuration = try MediaPickerConfiguration(
+            sources: .camera,
+            mediaTypes: .photo,
+            photoOutputFormat: .png
+        )
+
+        #expect(configuration.photoOutputFormat == .png)
     }
 
     @Test func configurationsWithTheSameValuesAreEqual() throws {

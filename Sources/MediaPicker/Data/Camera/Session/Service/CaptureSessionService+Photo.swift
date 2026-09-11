@@ -8,7 +8,7 @@
 /** Validates and coordinates one asynchronous photo-capture command. */
 extension CaptureSessionService {
 
-    func capturePhoto() async throws -> CameraPhotoCaptureRequest {
+    func capturePhoto(format: PhotoOutputFormat) async throws -> CapturedMedia {
         guard canCapturePhoto else {
             throw MediaPickerError.photoCaptureFailed
         }
@@ -16,7 +16,7 @@ extension CaptureSessionService {
         try stateMachine.handle(.capturePhoto)
 
         do {
-            let request = try await operations.capturePhoto(resolvedFlashMode)
+            let request = try await operations.capturePhoto(resolvedFlashMode, format)
             try stateMachine.handle(.photoCaptured)
             return request
         } catch {

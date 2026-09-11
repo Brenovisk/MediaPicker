@@ -5,6 +5,7 @@
 //  Created by Breno Lucas on 10/09/26.
 //
 
+import Foundation
 @testable import MediaPicker
 
 enum CameraSessionControllerSpyError: Error {
@@ -17,7 +18,7 @@ enum CameraSessionControllerOperation: Equatable {
     case enteredBackground
     case enteredForeground
     case switchCamera
-    case capturePhoto
+    case capturePhoto(PhotoOutputFormat)
     case setFlashMode(CameraFlashMode)
     case setTorchMode(CameraTorchMode)
 }
@@ -34,7 +35,7 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
     private(set) var torchMode: CameraTorchMode
     private let updateStream: AsyncStream<CameraSessionSnapshot>
     private let updateContinuation: AsyncStream<CameraSessionSnapshot>.Continuation
-    private var nextPhotoRequestID: Int64 = 1
+    private var nextPhotoID = UUID()
 
     init(
         positions: [CameraPosition] = [],
@@ -88,10 +89,15 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         return position
     }
 
-    func capturePhoto() throws -> CameraPhotoCaptureRequest {
-        try record(.capturePhoto)
-        defer { nextPhotoRequestID += 1 }
-        return CameraPhotoCaptureRequest(id: nextPhotoRequestID)
+    func capturePhoto(format: PhotoOutputFormat) throws -> CapturedMedia {
+        try record(.capturePhoto(format))
+        defer { nextPhotoID = UUID() }
+        return CapturedMedia(
+            id: nextPhotoID,
+            mediaType: .photo,
+            source: .camera,
+            contentURL: URL(fileURLWithPath: "/tmp/photo.jpg")
+        )
     }
 
     func setFlashMode(_ mode: CameraFlashMode) throws {

@@ -11,19 +11,26 @@ import AVFoundation
 extension CaptureSessionStorage {
 
     func capturePhoto(
-        flashMode: CameraFlashMode
-    ) async throws -> CameraPhotoCaptureRequest {
-        guard session.outputs.contains(photoOutput) else {
+        flashMode: CameraFlashMode,
+        outputFormat: PhotoOutputFormat
+    ) async throws -> CapturedMedia {
+        guard session.outputs.contains(photoOutput),
+              photoOutput.availablePhotoCodecTypes.contains(.jpeg) else {
             throw MediaPickerError.photoCaptureFailed
         }
 
-        let settings = AVCapturePhotoSettings()
+        let settings = AVCapturePhotoSettings(
+            format: [AVVideoCodecKey: AVVideoCodecType.jpeg]
+        )
         settings.flashMode = flashMode.captureMode
         let request = CameraPhotoCaptureRequest(id: settings.uniqueID)
 
         return try await withCheckedThrowingContinuation { continuation in
             let delegate = PhotoCaptureCompletionDelegate(
-                request: request,
+                processor: PhotoCaptureResultProcessor(
+                    request: request,
+                    format: outputFormat
+                ),
                 continuation: continuation
             )
             photoOutput.capturePhoto(with: settings, delegate: delegate)
