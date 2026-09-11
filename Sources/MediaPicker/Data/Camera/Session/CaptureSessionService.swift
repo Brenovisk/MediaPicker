@@ -190,6 +190,8 @@ actor CaptureSessionService: CameraSessionControlling {
 // MARK: Helper Methods
 extension CaptureSessionService {
 
+    // MARK: Recovery
+
     func recoverFromMediaServicesReset() {
         guard didAttemptRecovery == false, let position = configuredPosition else {
             try? stateMachine.handle(.fail(.mediaServicesResetRecoveryFailed))
@@ -209,6 +211,8 @@ extension CaptureSessionService {
         }
     }
 
+    // MARK: Lifecycle
+
     private var requiresClosing: Bool {
         state != .idle || configuredPosition != nil || isSessionRunning
     }
@@ -221,6 +225,8 @@ extension CaptureSessionService {
             throw error
         }
     }
+
+    // MARK: Session Preparation
 
     private func resetSession() {
         operations.reset()
@@ -245,6 +251,8 @@ extension CaptureSessionService {
         }
     }
 
+    // MARK: Lighting Capabilities
+
     private func refreshLightingCapabilities() {
         lightingCapabilities = operations.lightingCapabilities()
 
@@ -256,6 +264,8 @@ extension CaptureSessionService {
             torchMode = .off
         }
     }
+
+    // MARK: Running State
 
     private func resumeSession() throws {
         do {

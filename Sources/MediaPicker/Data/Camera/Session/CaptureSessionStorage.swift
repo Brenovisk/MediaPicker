@@ -157,12 +157,16 @@ private final class CaptureSessionStorage: @unchecked Sendable {
 // MARK: Helper Methods
 extension CaptureSessionStorage {
 
+    // MARK: Multitasking
+
     private func enableMultitaskingCameraAccessIfSupported() {
     #if os(iOS) && !targetEnvironment(macCatalyst)
         guard session.isMultitaskingCameraAccessSupported else { return }
         session.isMultitaskingCameraAccessEnabled = true
     #endif
     }
+
+    // MARK: Session Configuration
 
     private func configureSession(with videoInput: AVCaptureDeviceInput) throws {
         session.beginConfiguration()
@@ -205,6 +209,8 @@ extension CaptureSessionStorage {
         session.addOutput(videoOutput)
     }
 
+    // MARK: Input Replacement
+
     private func replaceVideoInput(
         _ currentInput: AVCaptureDeviceInput,
         with newInput: AVCaptureDeviceInput
@@ -229,6 +235,8 @@ extension CaptureSessionStorage {
         guard session.canAddInput(input) else { return }
         session.addInput(input)
     }
+
+    // MARK: Input Preparation
 
     private func makeVideoInput(for position: CameraPosition) throws -> AVCaptureDeviceInput {
         if let preparedInput = preparedInput(for: position) {

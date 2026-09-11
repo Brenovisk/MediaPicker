@@ -23,6 +23,8 @@ final class CaptureSessionEventObserver: @unchecked Sendable {
         stop()
     }
 
+    // MARK: Observation Lifecycle
+
     func start(
         session: AVCaptureSession,
         handler: @escaping @Sendable (CameraSessionEvent) -> Void
@@ -70,6 +72,8 @@ final class CaptureSessionEventObserver: @unchecked Sendable {
         }
     }
 
+    // MARK: Event Mapping
+
     private static func event(from notification: Notification) -> CameraSessionEvent {
         switch notification.name {
         case AVCaptureSession.interruptionEndedNotification:
@@ -87,11 +91,11 @@ final class CaptureSessionEventObserver: @unchecked Sendable {
             return .runtimeFailure(.captureSessionRuntimeFailed)
         }
 
-#if os(iOS) && !targetEnvironment(macCatalyst)
+    #if os(iOS) && !targetEnvironment(macCatalyst)
         if code == .mediaServicesWereReset {
             return .mediaServicesWereReset
         }
-#endif
+    #endif
 
         switch code {
         case .deviceInUseByAnotherApplication:
@@ -106,7 +110,7 @@ final class CaptureSessionEventObserver: @unchecked Sendable {
     private static func interruptionReason(
         from notification: Notification
     ) -> CameraSessionEvent.InterruptionReason {
-#if os(iOS) && !targetEnvironment(macCatalyst)
+    #if os(iOS) && !targetEnvironment(macCatalyst)
         guard let value = notification.userInfo?[AVCaptureSessionInterruptionReasonKey]
             as? NSNumber,
               let reason = AVCaptureSession.InterruptionReason(rawValue: value.intValue)
@@ -125,9 +129,9 @@ final class CaptureSessionEventObserver: @unchecked Sendable {
         @unknown default:
             return .unknown
         }
-#else
+    #else
         return .unknown
-#endif
+    #endif
     }
 
 }

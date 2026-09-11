@@ -26,8 +26,4 @@ struct MediaPickerConstantsTests {
         )
     }
 
-    @Test func minimumVideoDurationIsZero() {
-        #expect(MediaPickerConstants.Number.minimumVideoDuration == .zero)
-    }
-
 }

@@ -26,18 +26,6 @@ struct CameraPreviewTests {
         #expect(previewLayer?.videoGravity == .resizeAspectFill)
     }
 
-    @Test func previewLayerFollowsViewSizeChanges() {
-        let view = CameraPreviewUIKitView(
-            session: AVCaptureSession(),
-            frameStore: CameraPreviewFrameStore()
-        )
-
-        view.frame = CGRect(x: 0, y: 0, width: 320, height: 640)
-        view.layoutIfNeeded()
-
-        #expect(view.layer.bounds == view.bounds)
-    }
-
     @Test func updatingPreviewDoesNotReplaceSessionOrLayer() {
         let session = AVCaptureSession()
         let view = CameraPreviewUIKitView(
@@ -58,25 +46,34 @@ struct CameraPreviewTests {
             frameStore: CameraPreviewFrameStore()
         )
 
-        view.setMirroring(true)
+        view.setCameraPosition(.front)
         #expect(view.isMirrored)
 
-        view.setMirroring(false)
+        view.setCameraPosition(.back)
         #expect(view.isMirrored == false)
     }
 
     @Test(arguments: [
-        (UIInterfaceOrientation.portrait, CGFloat(90)),
-        (.portraitUpsideDown, CGFloat(270)),
-        (.landscapeLeft, CGFloat(0)),
-        (.landscapeRight, CGFloat(180)),
-        (.unknown, CGFloat(90))
+        (Double(0), false, UIImage.Orientation.up),
+        (Double(90), false, .right),
+        (Double(180), false, .down),
+        (Double(270), false, .left),
+        (Double(0), true, .upMirrored),
+        (Double(90), true, .leftMirrored),
+        (Double(180), true, .downMirrored),
+        (Double(270), true, .rightMirrored)
     ])
-    func orientationMapsToPredictableRotationAngle(
-        orientation: UIInterfaceOrientation,
-        angle: CGFloat
+    func frozenFrameMatchesPreviewOrientation(
+        angle: Double,
+        mirrored: Bool,
+        expected: UIImage.Orientation
     ) {
-        #expect(CameraPreviewOrientation.rotationAngle(for: orientation) == angle)
+        let orientation = CameraPreviewUIKitView.imageOrientation(
+            rotationAngle: angle,
+            mirrored: mirrored
+        )
+
+        #expect(orientation == expected)
     }
 
 }

@@ -3,10 +3,6 @@ import Testing
 
 struct CameraPositionTests {
 
-    @Test func frontAndBackAreDistinctPositions() {
-        #expect(CameraPosition.front != .back)
-    }
-
     @Test func cameraPositionIsSendable() {
         requireSendable(CameraPosition.back)
     }

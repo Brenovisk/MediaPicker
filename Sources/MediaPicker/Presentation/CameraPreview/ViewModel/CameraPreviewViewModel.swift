@@ -132,6 +132,8 @@ final class CameraPreviewViewModel {
 // MARK: Helper Methods
 extension CameraPreviewViewModel {
 
+    // MARK: Session Observation
+
     private func observeSessionUpdates() {
         guard sessionUpdatesTask == nil else { return }
 
@@ -149,6 +151,8 @@ extension CameraPreviewViewModel {
         sessionUpdatesTask = nil
     }
 
+    // MARK: Privacy
+
     private func concealPreviewForPrivacy() {
         withAnimation(
             .easeIn(duration: CameraPreviewConstants.Motion.privacyBlurDuration)
@@ -164,6 +168,8 @@ extension CameraPreviewViewModel {
             privacyBlurRadius = .zero
         }
     }
+
+    // MARK: Camera Switch Transition
 
     private func beginCameraSwitch() {
         isSwitchingCamera = true
@@ -244,6 +250,8 @@ extension CameraPreviewViewModel {
             previewRotationDegrees = .zero
         }
     }
+
+    // MARK: State
 
     private func apply(_ snapshot: CameraSessionSnapshot) {
         cameraState = snapshot.state
