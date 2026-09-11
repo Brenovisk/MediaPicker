@@ -21,6 +21,8 @@ final class CameraPreviewUIKitView: UIView {
     private let imageContext = CIContext(options: [.cacheIntermediates: false])
     private weak var frozenFrame: UIImageView?
 
+    // MARK: Preview Lifecycle
+
     // UIKit requires this overridable class property to select the backing layer.
     // swiftlint:disable:next static_over_final_class
     override class var layerClass: AnyClass {
@@ -62,10 +64,7 @@ final class CameraPreviewUIKitView: UIView {
         applyMirroring()
     }
 
-    func updateVideoOrientation() {
-        refreshRotationCoordinator()
-        applyRotationAngle()
-    }
+    // MARK: Camera Position
 
     func setCameraPosition(_ position: CameraPosition) {
         cameraPosition = position
@@ -73,6 +72,8 @@ final class CameraPreviewUIKitView: UIView {
         applyMirroring()
         updateVideoOrientation()
     }
+
+    // MARK: Frozen Frame
 
     @discardableResult
     func freezeCurrentFrame() -> UInt64? {
@@ -111,10 +112,19 @@ final class CameraPreviewUIKitView: UIView {
         frozenFrame = nil
     }
 
+    // MARK: Mirroring
+
     private func applyMirroring() {
         guard let connection = previewLayer?.connection else { return }
         connection.automaticallyAdjustsVideoMirroring = false
         connection.isVideoMirrored = isMirrored
+    }
+
+    // MARK: Orientation
+
+    func updateVideoOrientation() {
+        refreshRotationCoordinator()
+        applyRotationAngle()
     }
 
     private var activeCamera: AVCaptureDevice? {
