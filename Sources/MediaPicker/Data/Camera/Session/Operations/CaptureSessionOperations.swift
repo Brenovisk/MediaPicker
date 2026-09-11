@@ -21,6 +21,8 @@ struct CaptureSessionOperations: Sendable {
     typealias PositionCommand = @Sendable (CameraPosition) -> Void
     typealias LightingProvider = @Sendable () -> CameraLightingCapabilities
     typealias PhotoOutputCapabilitiesProvider = @Sendable () -> CameraPhotoOutputCapabilities
+    typealias PhotoCaptureCommand = @Sendable (CameraFlashMode) async throws
+        -> CameraPhotoCaptureRequest
     typealias TorchCommand = @Sendable (CameraTorchMode) throws -> Void
     typealias EventHandler = @Sendable (CameraSessionEvent) -> Void
     typealias EventObserver = @Sendable (@escaping EventHandler) -> Void
@@ -36,6 +38,7 @@ struct CaptureSessionOperations: Sendable {
     let switchCamera: ThrowingPositionCommand
     let lightingCapabilities: LightingProvider
     let photoOutputCapabilities: PhotoOutputCapabilitiesProvider
+    let capturePhoto: PhotoCaptureCommand
     let setTorchMode: TorchCommand
 
     let startObservingEvents: EventObserver
@@ -51,6 +54,9 @@ struct CaptureSessionOperations: Sendable {
         switchCamera: @escaping ThrowingPositionCommand,
         lightingCapabilities: @escaping LightingProvider = { .unavailable },
         photoOutputCapabilities: @escaping PhotoOutputCapabilitiesProvider = { .unavailable },
+        capturePhoto: @escaping PhotoCaptureCommand = { _ in
+            throw MediaPickerError.photoCaptureFailed
+        },
         setTorchMode: @escaping TorchCommand = { _ in },
         startObservingEvents: @escaping EventObserver = { _ in },
         stopObservingEvents: @escaping SessionCommand = {}
@@ -64,6 +70,7 @@ struct CaptureSessionOperations: Sendable {
         self.switchCamera = switchCamera
         self.lightingCapabilities = lightingCapabilities
         self.photoOutputCapabilities = photoOutputCapabilities
+        self.capturePhoto = capturePhoto
         self.setTorchMode = setTorchMode
         self.startObservingEvents = startObservingEvents
         self.stopObservingEvents = stopObservingEvents
