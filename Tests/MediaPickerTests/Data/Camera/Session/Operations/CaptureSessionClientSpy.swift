@@ -28,6 +28,7 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private let error: (any Error)?
     private let failingOperation: CaptureSessionClientOperation
     private var capabilities: [CameraLightingCapabilities]
+    private let photoCapabilities: CameraPhotoOutputCapabilities
     private var activeOperations = 0
     private(set) var maximumConcurrentOperations = 0
     private(set) var didRunOnMainThread = false
@@ -48,12 +49,14 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
         operationDuration: TimeInterval = .zero,
         error: (any Error)? = nil,
         failingOperation: CaptureSessionClientOperation = .all,
-        capabilities: [CameraLightingCapabilities] = [.unavailable]
+        capabilities: [CameraLightingCapabilities] = [.unavailable],
+        photoCapabilities: CameraPhotoOutputCapabilities = .unavailable
     ) {
         self.operationDuration = operationDuration
         self.error = error
         self.failingOperation = failingOperation
         self.capabilities = capabilities
+        self.photoCapabilities = photoCapabilities
     }
 
     var operations: CaptureSessionOperations {
@@ -65,6 +68,7 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
             prepareCameraSwitch: prepareCameraSwitch,
             switchCamera: switchCamera,
             lightingCapabilities: lightingCapabilities,
+            photoOutputCapabilities: photoOutputCapabilities,
             setTorchMode: setTorchMode,
             startObservingEvents: startObservingEvents,
             stopObservingEvents: stopObservingEvents
@@ -117,6 +121,10 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
 
             return capabilities.removeFirst()
         }
+    }
+
+    func photoOutputCapabilities() -> CameraPhotoOutputCapabilities {
+        photoCapabilities
     }
 
     func setTorchMode(_ mode: CameraTorchMode) throws {
