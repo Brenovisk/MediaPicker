@@ -44,6 +44,7 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
     private(set) var selectedTorchModes: [CameraTorchMode] = []
     private(set) var capturedFlashModes: [CameraFlashMode] = []
     private(set) var capturedPhotoFormats: [PhotoOutputFormat] = []
+    private(set) var photoCaptureOptions: [CameraPhotoCaptureOptions] = []
     private(set) var captureCount = 0
     private(set) var startObservingCount = 0
     private(set) var stopObservingCount = 0
@@ -132,14 +133,12 @@ final class CaptureSessionClientSpy: @unchecked Sendable {
         photoCapabilities
     }
 
-    func capturePhoto(
-        flashMode: CameraFlashMode,
-        outputFormat: PhotoOutputFormat
-    ) async throws -> CapturedMedia {
+    func capturePhoto(options: CameraPhotoCaptureOptions) async throws -> CapturedMedia {
         let requestID = lock.withLock { () -> Int64 in
             captureCount += 1
-            capturedFlashModes.append(flashMode)
-            capturedPhotoFormats.append(outputFormat)
+            capturedFlashModes.append(options.flashMode)
+            capturedPhotoFormats.append(options.outputFormat)
+            photoCaptureOptions.append(options)
             return Int64(captureCount)
         }
 

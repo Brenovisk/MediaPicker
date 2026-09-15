@@ -15,6 +15,7 @@ struct CameraPreviewDependencies {
     let closeCamera: CloseCameraUseCase
     let updateCameraSession: UpdateCameraSessionUseCase
     let switchCamera: SwitchCameraUseCase
+    let capturePhoto: CapturePhotoUseCase
     let setFlashMode: SetCameraFlashModeUseCase
     let setTorchMode: SetCameraTorchModeUseCase
 
@@ -46,6 +47,7 @@ struct CameraPreviewDependencies {
             closeCamera: closeCameraUseCase,
             updateCameraSession: updateCameraSessionUseCase,
             switchCamera: switchCameraUseCase,
+            capturePhoto: CapturePhotoUseCase(cameraSession: cameraSession),
             setFlashMode: SetCameraFlashModeUseCase(cameraSession: cameraSession),
             setTorchMode: SetCameraTorchModeUseCase(cameraSession: cameraSession)
         )

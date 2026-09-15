@@ -21,7 +21,7 @@ struct CaptureSessionOperations: Sendable {
     typealias PositionCommand = @Sendable (CameraPosition) -> Void
     typealias LightingProvider = @Sendable () -> CameraLightingCapabilities
     typealias PhotoOutputCapabilitiesProvider = @Sendable () -> CameraPhotoOutputCapabilities
-    typealias PhotoCaptureCommand = @Sendable (CameraFlashMode, PhotoOutputFormat) async throws
+    typealias PhotoCaptureCommand = @Sendable (CameraPhotoCaptureOptions) async throws
         -> CapturedMedia
     typealias TorchCommand = @Sendable (CameraTorchMode) throws -> Void
     typealias EventHandler = @Sendable (CameraSessionEvent) -> Void
@@ -54,7 +54,7 @@ struct CaptureSessionOperations: Sendable {
         switchCamera: @escaping ThrowingPositionCommand,
         lightingCapabilities: @escaping LightingProvider = { .unavailable },
         photoOutputCapabilities: @escaping PhotoOutputCapabilitiesProvider = { .unavailable },
-        capturePhoto: @escaping PhotoCaptureCommand = { _, _ in
+        capturePhoto: @escaping PhotoCaptureCommand = { _ in
             throw MediaPickerError.photoCaptureFailed
         },
         setTorchMode: @escaping TorchCommand = { _ in },

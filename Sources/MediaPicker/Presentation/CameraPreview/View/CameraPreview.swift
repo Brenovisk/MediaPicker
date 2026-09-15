@@ -14,9 +14,15 @@ public struct CameraPreview: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: CameraPreviewViewModel
 
-    public init(position: CameraPosition = .back) {
+    public init(
+        position: CameraPosition = .back,
+        photoOutputFormat: PhotoOutputFormat = .jpeg
+    ) {
         _viewModel = State(
-            initialValue: CameraPreviewViewModel(initialPosition: position)
+            initialValue: CameraPreviewViewModel(
+                initialPosition: position,
+                photoOutputFormat: photoOutputFormat
+            )
         )
     }
 
