@@ -20,7 +20,7 @@ struct CaptureSessionPhotoTests {
         let service = CaptureSessionService(operations: client.operations)
 
         await #expect(throws: MediaPickerError.photoCaptureFailed) {
-            try await service.capturePhoto(format: .jpeg)
+            try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
         }
 
         #expect(client.captureCount == 0)
@@ -36,7 +36,7 @@ struct CaptureSessionPhotoTests {
         try await service.open(for: .back)
         try await service.setFlashMode(.auto)
 
-        _ = try await service.capturePhoto(format: .png)
+        _ = try await service.capturePhoto(format: .png, rotationAngle: 90)
 
         #expect(client.capturedFlashModes == [.auto])
         #expect(client.capturedPhotoFormats == [.png])
@@ -53,7 +53,7 @@ struct CaptureSessionPhotoTests {
         try await service.open(for: .back)
         try await service.setFlashMode(.on)
 
-        _ = try await service.capturePhoto(format: .jpeg)
+        _ = try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
 
         #expect(client.capturedFlashModes == [.off])
     }
@@ -66,13 +66,15 @@ struct CaptureSessionPhotoTests {
         let service = CaptureSessionService(operations: client.operations)
         try await service.open(for: .back)
 
-        let firstCapture = Task { try await service.capturePhoto(format: .jpeg) }
+        let firstCapture = Task {
+            try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
+        }
         while await service.state != .capturingPhoto {
             await Task.yield()
         }
 
         await #expect(throws: MediaPickerError.photoCaptureFailed) {
-            try await service.capturePhoto(format: .jpeg)
+            try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
         }
         _ = try await firstCapture.value
 
@@ -90,7 +92,7 @@ struct CaptureSessionPhotoTests {
         try await service.open(for: .back)
 
         await #expect(throws: MediaPickerError.photoCaptureFailed) {
-            try await service.capturePhoto(format: .jpeg)
+            try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
         }
 
         #expect(client.captureCount == 1)
@@ -102,8 +104,8 @@ struct CaptureSessionPhotoTests {
         let service = CaptureSessionService(operations: client.operations)
         try await service.open(for: .back)
 
-        let first = try await service.capturePhoto(format: .jpeg)
-        let second = try await service.capturePhoto(format: .jpeg)
+        let first = try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
+        let second = try await service.capturePhoto(format: .jpeg, rotationAngle: 0)
 
         #expect(first.contentURL != second.contentURL)
     }

@@ -20,10 +20,12 @@ final class CameraPreviewViewModel {
     private let closeCameraUseCase: CloseCameraUseCase
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
+    private let capturePhotoUseCase: CapturePhotoUseCase
     private let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
+    private let photoOutputFormat: PhotoOutputFormat
     private var sessionUpdatesTask: Task<Void, Never>?
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
@@ -47,9 +49,11 @@ final class CameraPreviewViewModel {
 
     init(
         initialPosition: CameraPosition,
+        photoOutputFormat: PhotoOutputFormat = .jpeg,
         dependencies: CameraPreviewDependencies = .live()
     ) {
         self.initialPosition = initialPosition
+        self.photoOutputFormat = photoOutputFormat
         activePosition = initialPosition
         previewSession = dependencies.previewSession
         previewSurface = dependencies.previewSurface
@@ -58,6 +62,7 @@ final class CameraPreviewViewModel {
         closeCameraUseCase = dependencies.closeCamera
         updateCameraSessionUseCase = dependencies.updateCameraSession
         switchCameraUseCase = dependencies.switchCamera
+        capturePhotoUseCase = dependencies.capturePhoto
         setFlashModeUseCase = dependencies.setFlashMode
         setTorchModeUseCase = dependencies.setTorchMode
     }
@@ -94,6 +99,13 @@ final class CameraPreviewViewModel {
             cancelCameraSwitchTransition()
             throw error
         }
+    }
+
+    func capturePhoto() async throws -> CapturedMedia {
+        try await capturePhotoUseCase.execute(
+            format: photoOutputFormat,
+            rotationAngle: previewSurface.rotationAngles.capture
+        )
     }
 
     func setFlashMode(_ mode: CameraFlashMode) async throws {
