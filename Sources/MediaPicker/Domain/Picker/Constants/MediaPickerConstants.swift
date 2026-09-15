@@ -4,6 +4,12 @@ enum MediaPickerConstants {
 
     enum Text {
         case greeting
+        case capturePhoto
+        case closeCamera
+        case flashAuto
+        case flashOff
+        case flashOn
+        case preparingCamera
         case switchCamera
 
         case photoCaptureFailed
@@ -62,6 +68,18 @@ extension MediaPickerConstants.Text {
         switch self {
         case .greeting:
             return "Olá do meu SPM Framework!"
+        case .capturePhoto:
+            return "Take photo"
+        case .closeCamera:
+            return "Close camera"
+        case .flashAuto:
+            return "Flash automatic"
+        case .flashOff:
+            return "Flash off"
+        case .flashOn:
+            return "Flash on"
+        case .preparingCamera:
+            return "Preparing camera"
         case .switchCamera:
             return "Switch camera"
 

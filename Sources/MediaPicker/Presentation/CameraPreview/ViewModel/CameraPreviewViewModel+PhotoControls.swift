@@ -1,0 +1,96 @@
+//
+//  CameraPreviewViewModel+PhotoControls.swift
+//  MediaPicker
+//
+//  Created by Breno Lucas on 14/09/26.
+//
+
+#if os(iOS)
+import SwiftUI
+
+/** Keeps photo-control state and actions separate from preview lifecycle logic. */
+extension CameraPreviewViewModel {
+
+    var canSwitchCamera: Bool {
+        controlsAreReady
+    }
+
+    var canCapturePhoto: Bool {
+        controlsAreReady && isPhotoCaptureAvailable
+    }
+
+    var canChangeFlashMode: Bool {
+        controlsAreReady && lightingCapabilities.flashModes.count > 1
+    }
+
+    var canClose: Bool {
+        isCapturingPhoto == false && isSwitchingCamera == false
+    }
+
+    var showsPreparationIndicator: Bool {
+        isOpeningCamera || cameraState == .preparing
+    }
+
+    var flashAccessibilityLabel: String {
+        switch flashMode {
+        case .off:
+            MediaPickerConstants.Text.flashOff.value
+        case .on:
+            MediaPickerConstants.Text.flashOn.value
+        case .auto:
+            MediaPickerConstants.Text.flashAuto.value
+        }
+    }
+
+    func capturePhoto() async throws -> CapturedMedia {
+        guard canCapturePhoto else {
+            throw MediaPickerError.photoCaptureFailed
+        }
+
+        isCapturingPhoto = true
+        showShutterFeedback()
+        defer { isCapturingPhoto = false }
+
+        return try await capturePhotoUseCase.execute(
+            format: photoOutputFormat,
+            rotationAngle: previewSurface.rotationAngles.capture
+        )
+    }
+
+    func selectNextFlashMode() async throws {
+        guard canChangeFlashMode,
+              let currentIndex = lightingCapabilities.flashModes.firstIndex(of: flashMode)
+        else { return }
+
+        let modes = lightingCapabilities.flashModes
+        let nextIndex = modes.index(after: currentIndex)
+        let selectedIndex = nextIndex == modes.endIndex ? modes.startIndex : nextIndex
+        let snapshot = try await setFlashModeUseCase.execute(mode: modes[selectedIndex])
+    
+        apply(snapshot)
+    }
+
+    private var controlsAreReady: Bool {
+        cameraState == .ready
+            && isSwitchingCamera == false
+            && isCapturingPhoto == false
+    }
+
+    private func showShutterFeedback() {
+        shutterFeedbackTask?.cancel()
+        shutterFeedbackOpacity = CameraPreviewConstants.Motion.shutterFeedbackOpacity
+
+        shutterFeedbackTask = Task { [weak self] in
+            await Task.yield()
+            guard Task.isCancelled == false else { return }
+
+            withAnimation(
+                .easeOut(duration: CameraPreviewConstants.Motion.shutterFeedbackDuration)
+            ) {
+                self?.shutterFeedbackOpacity = .zero
+            }
+        }
+    }
+
+}
+#endif

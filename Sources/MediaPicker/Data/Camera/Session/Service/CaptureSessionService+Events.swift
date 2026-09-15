@@ -50,6 +50,7 @@ extension CaptureSessionService {
             CameraSessionSnapshot(
                 state: state,
                 position: activeCameraPosition,
+                canCapturePhoto: canCapturePhoto,
                 lightingCapabilities: lightingCapabilities,
                 flashMode: flashMode,
                 torchMode: torchMode

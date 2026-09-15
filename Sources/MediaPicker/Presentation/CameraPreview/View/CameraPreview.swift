@@ -8,16 +8,27 @@
 #if os(iOS)
 import SwiftUI
 
-/** Displays the live camera feed without exposing AVFoundation session types. */
+/**
+ Displays the live camera feed and accessible photo controls.
+
+ `onCapture` receives a temporary-file result after a successful photo capture.
+ `onCancel` runs after the camera session has closed successfully.
+*/
 public struct CameraPreview: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: CameraPreviewViewModel
+    private let onCapture: (CapturedMedia) -> Void
+    private let onCancel: () -> Void
 
     public init(
         position: CameraPosition = .back,
-        photoOutputFormat: PhotoOutputFormat = .jpeg
+        photoOutputFormat: PhotoOutputFormat = .jpeg,
+        onCapture: @escaping (CapturedMedia) -> Void = { _ in },
+        onCancel: @escaping () -> Void = {}
     ) {
+        self.onCapture = onCapture
+        self.onCancel = onCancel
         _viewModel = State(
             initialValue: CameraPreviewViewModel(
                 initialPosition: position,
@@ -43,8 +54,28 @@ public struct CameraPreview: View {
             axis: (x: 0, y: 1, z: 0),
             perspective: 0.72
         )
-        .overlay(alignment: .bottomTrailing) {
-            switchCameraButton
+        .overlay {
+            Color.white
+                .opacity(viewModel.shutterFeedbackOpacity)
+                .allowsHitTesting(false)
+                .ignoresSafeArea()
+        }
+        .safeAreaInset(edge: .top) {
+            topBar
+        }
+        .safeAreaInset(edge: .bottom) {
+            CameraPreviewControls(
+                flashMode: viewModel.flashMode,
+                flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
+                canChangeFlashMode: viewModel.canChangeFlashMode,
+                canCapturePhoto: viewModel.canCapturePhoto,
+                canSwitchCamera: viewModel.canSwitchCamera,
+                onFlash: changeFlashMode,
+                onCapture: capturePhoto,
+                onSwitchCamera: switchCamera
+            )
+            .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
+            .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
         }
         .task {
             try? await viewModel.open()
@@ -61,19 +92,61 @@ public struct CameraPreview: View {
         }
     }
 
-    private var switchCameraButton: some View {
-        Button {
-            Task {
-                try? await viewModel.switchCamera()
+    private var topBar: some View {
+        HStack(spacing: CameraPreviewConstants.Layout.progressSpacing) {
+            Button(action: close) {
+                CameraPreviewConstants.Icon.close.styledImage
             }
-        } label: {
-            CameraPreviewConstants.Icon.switchCamera.styledImage
+            .buttonStyle(CameraControlButtonStyle())
+            .disabled(viewModel.canClose == false)
+            .accessibilityLabel(MediaPickerConstants.Text.closeCamera.value)
+
+            Spacer()
+
+            if viewModel.showsPreparationIndicator {
+                ProgressView()
+                    .tint(.white)
+                    .accessibilityLabel(MediaPickerConstants.Text.preparingCamera.value)
+            }
         }
-        .buttonStyle(CameraSwitchButtonStyle())
         .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-        .padding(.bottom, CameraPreviewConstants.Layout.bottomPadding)
-        .disabled(viewModel.canSwitchCamera == false)
-        .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)
+        .padding(.top, CameraPreviewConstants.Layout.verticalPadding)
+    }
+
+}
+
+extension CameraPreview {
+
+    private func capturePhoto() {
+        guard viewModel.canCapturePhoto else { return }
+
+        Task {
+            guard let media = try? await viewModel.capturePhoto() else { return }
+            onCapture(media)
+        }
+    }
+
+    private func switchCamera() {
+        guard viewModel.canSwitchCamera else { return }
+
+        Task {
+            try? await viewModel.switchCamera()
+        }
+    }
+
+    private func changeFlashMode() {
+        Task {
+            try? await viewModel.selectNextFlashMode()
+        }
+    }
+
+    private func close() {
+        guard viewModel.canClose else { return }
+
+        Task {
+            guard (try? await viewModel.close()) != nil else { return }
+            onCancel()
+        }
     }
 
 }

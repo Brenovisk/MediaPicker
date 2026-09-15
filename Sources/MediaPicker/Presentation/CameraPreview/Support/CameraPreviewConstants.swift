@@ -11,9 +11,17 @@ import SwiftUI
 enum CameraPreviewConstants {
 
     enum Layout {
-        static let switchButtonSize: CGFloat = 56
-        static let horizontalPadding: CGFloat = 32
-        static let bottomPadding: CGFloat = 64
+        static let controlSize: CGFloat = 56
+        static let shutterSize: CGFloat = 72
+        static let shutterInnerInset: CGFloat = 6
+        static let minimumTapTarget: CGFloat = 44
+        static let horizontalPadding: CGFloat = 24
+        static let verticalPadding: CGFloat = 20
+        static let controlsSpacing: CGFloat = 24
+        static let controlsBackgroundOpacity = 0.42
+        static let controlsCornerRadius: CGFloat = 28
+        static let controlsMaximumWidth: CGFloat = 520
+        static let progressSpacing: CGFloat = 8
     }
 
     enum Motion {
@@ -31,13 +39,28 @@ enum CameraPreviewConstants {
         static let pressedScale = 1.08
         static let pressedOpacity = 0.78
         static let buttonAnimationDuration = 0.16
+        static let shutterFeedbackDuration = 0.12
+        static let shutterFeedbackOpacity = 0.72
     }
 
     enum Icon {
+        case close
+        case flash(CameraFlashMode)
+        case shutter
         case switchCamera
 
         var systemName: String {
             switch self {
+            case .close:
+                "xmark"
+            case .flash(.off):
+                "bolt.slash.fill"
+            case .flash(.on):
+                "bolt.fill"
+            case .flash(.auto):
+                "bolt.badge.automatic.fill"
+            case .shutter:
+                "circle"
             case .switchCamera:
                 "arrow.triangle.2.circlepath.camera"
             }
@@ -67,8 +90,8 @@ enum CameraPreviewConstants {
                 .font(.title2)
                 .foregroundStyle(.white)
                 .frame(
-                    width: CameraPreviewConstants.Layout.switchButtonSize,
-                    height: CameraPreviewConstants.Layout.switchButtonSize
+                    width: CameraPreviewConstants.Layout.controlSize,
+                    height: CameraPreviewConstants.Layout.controlSize
                 )
                 .contentShape(Circle())
         }

@@ -20,28 +20,29 @@ final class CameraPreviewViewModel {
     private let closeCameraUseCase: CloseCameraUseCase
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
-    private let capturePhotoUseCase: CapturePhotoUseCase
-    private let setFlashModeUseCase: SetCameraFlashModeUseCase
+    let capturePhotoUseCase: CapturePhotoUseCase
+    let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
-    private let photoOutputFormat: PhotoOutputFormat
+    let photoOutputFormat: PhotoOutputFormat
     private var sessionUpdatesTask: Task<Void, Never>?
+    var shutterFeedbackTask: Task<Void, Never>?
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
+    private(set) var isPhotoCaptureAvailable = false
     private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
     private(set) var flashMode: CameraFlashMode = .off
     private(set) var torchMode: CameraTorchMode = .off
+    private(set) var isOpeningCamera = false
     private(set) var isSwitchingCamera = false
+    var isCapturingPhoto = false
+    var shutterFeedbackOpacity = 0.0
 
     private(set) var previewBlurRadius: CGFloat = .zero
     private(set) var privacyBlurRadius: CGFloat = .zero
     private(set) var previewOpacity = 1.0
     private(set) var previewRotationDegrees = 0.0
-
-    var canSwitchCamera: Bool {
-        cameraState == .ready && isSwitchingCamera == false
-    }
 
     var displayedPreviewBlurRadius: CGFloat {
         max(previewBlurRadius, privacyBlurRadius)
@@ -68,6 +69,10 @@ final class CameraPreviewViewModel {
     }
 
     func open() async throws {
+        guard isOpeningCamera == false else { return }
+
+        isOpeningCamera = true
+        defer { isOpeningCamera = false }
         observeSessionUpdates()
 
         do {
@@ -99,18 +104,6 @@ final class CameraPreviewViewModel {
             cancelCameraSwitchTransition()
             throw error
         }
-    }
-
-    func capturePhoto() async throws -> CapturedMedia {
-        try await capturePhotoUseCase.execute(
-            format: photoOutputFormat,
-            rotationAngle: previewSurface.rotationAngles.capture
-        )
-    }
-
-    func setFlashMode(_ mode: CameraFlashMode) async throws {
-        let snapshot = try await setFlashModeUseCase.execute(mode: mode)
-        apply(snapshot)
     }
 
     func setTorchMode(_ mode: CameraTorchMode) async throws {
@@ -265,8 +258,9 @@ extension CameraPreviewViewModel {
 
     // MARK: State
 
-    private func apply(_ snapshot: CameraSessionSnapshot) {
+    func apply(_ snapshot: CameraSessionSnapshot) {
         cameraState = snapshot.state
+        isPhotoCaptureAvailable = snapshot.canCapturePhoto
         lightingCapabilities = snapshot.lightingCapabilities
         flashMode = snapshot.flashMode
         torchMode = snapshot.torchMode

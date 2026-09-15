@@ -1,14 +1,15 @@
 //
-//  CameraSwitchButtonStyle.swift
+//  CameraControlButtonStyle.swift
 //  MediaPicker
 //
-//  Created by Breno Lucas on 10/09/26.
+//  Created by Breno Lucas on 14/09/26.
 //
 
 #if os(iOS)
 import SwiftUI
 
-struct CameraSwitchButtonStyle: ButtonStyle {
+/** Gives camera utility controls consistent pressed feedback. */
+struct CameraControlButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
