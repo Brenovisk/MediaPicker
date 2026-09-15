@@ -18,6 +18,7 @@ final class CaptureSessionStorage: @unchecked Sendable {
     let session: AVCaptureSession
     let videoOutput = AVCaptureVideoDataOutput()
     let photoOutput = AVCapturePhotoOutput()
+    let photoCaptureDelegates = PhotoCaptureDelegateStore()
     let deviceDiscovery = CameraDeviceDiscoveryService()
 
     var configuredPosition: CameraPosition?
@@ -34,6 +35,10 @@ final class CaptureSessionStorage: @unchecked Sendable {
         self.session = session
         videoOutput.alwaysDiscardsLateVideoFrames = true
         videoOutput.setSampleBufferDelegate(frameStore, queue: frameQueue)
+    }
+
+    deinit {
+        photoCaptureDelegates.cancelAll()
     }
 
     func configure(for position: CameraPosition) throws {
@@ -54,10 +59,12 @@ final class CaptureSessionStorage: @unchecked Sendable {
     }
 
     func stopRunning() {
+        photoCaptureDelegates.cancelAll()
         session.stopRunning()
     }
 
     func reset() {
+        photoCaptureDelegates.cancelAll()
         session.beginConfiguration()
         session.inputs.forEach(session.removeInput)
         session.outputs.forEach(session.removeOutput)
