@@ -18,13 +18,13 @@ enum CameraPreviewConstants {
         static let horizontalPadding: CGFloat = 24
         static let verticalPadding: CGFloat = 24
         static let controlsSpacing: CGFloat = 24
-        static let controlsBackgroundOpacity = 0.42
-        static let controlsCornerRadius: CGFloat = 28
         static let controlsMaximumWidth: CGFloat = 520
         static let progressSpacing: CGFloat = 8
         static let controlHorizontalPadding: CGFloat = 12
         static let reviewControlsSpacing: CGFloat = 16
         static let reviewMaximumPixelSize: CGFloat = 2_048
+        static let reviewBackgroundBlurRadius: CGFloat = 32
+        static let reviewBackgroundOpacity = 0.62
     }
 
     enum Motion {
@@ -45,6 +45,8 @@ enum CameraPreviewConstants {
         static let shutterFeedbackDuration = 0.12
         static let shutterFeedbackOpacity = 0.72
         static let reviewTransitionDuration = 0.12
+        static let reviewLongPressDuration = 0.35
+        static let reviewControlsVisibilityDuration = 0.16
     }
 
     enum Icon {
@@ -66,7 +68,7 @@ enum CameraPreviewConstants {
             case .shutter:
                 "circle"
             case .switchCamera:
-                "arrow.triangle.2.circlepath.camera"
+                "arrow.triangle.2.circlepath"
             }
         }
 

@@ -31,13 +31,6 @@ struct CameraPreviewControls: View {
         .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
         .padding(.vertical, CameraPreviewConstants.Layout.verticalPadding)
         .frame(maxWidth: CameraPreviewConstants.Layout.controlsMaximumWidth)
-        .background(.black.opacity(CameraPreviewConstants.Layout.controlsBackgroundOpacity))
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: CameraPreviewConstants.Layout.controlsCornerRadius,
-                style: .continuous
-            )
-        )
     }
 
     private var flashButton: some View {

@@ -78,6 +78,36 @@ public struct CameraPreview: View {
     }
 
     private var liveCamera: some View {
+        ZStack {
+            cameraFeed
+                .ignoresSafeArea()
+
+            VStack(spacing: .zero) {
+                CameraPreviewTopBar(
+                    canClose: viewModel.canClose,
+                    showsPreparationIndicator: viewModel.showsPreparationIndicator,
+                    onClose: close
+                )
+                .frame(maxWidth: .infinity)
+
+                Spacer(minLength: .zero)
+
+                CameraPreviewControls(
+                    flashMode: viewModel.flashMode,
+                    flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
+                    canChangeFlashMode: viewModel.canChangeFlashMode,
+                    canCapturePhoto: viewModel.canCapturePhoto,
+                    canSwitchCamera: viewModel.canSwitchCamera,
+                    onFlash: changeFlashMode,
+                    onCapture: capturePhoto,
+                    onSwitchCamera: switchCamera
+                )
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var cameraFeed: some View {
         Group {
             if let previewSession = viewModel.previewSession {
                 CameraPreviewRepresentable(
@@ -99,27 +129,6 @@ public struct CameraPreview: View {
                 .opacity(viewModel.shutterFeedbackOpacity)
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
-        }
-        .safeAreaInset(edge: .top) {
-            CameraPreviewTopBar(
-                canClose: viewModel.canClose,
-                showsPreparationIndicator: viewModel.showsPreparationIndicator,
-                onClose: close
-            )
-        }
-        .safeAreaInset(edge: .bottom) {
-            CameraPreviewControls(
-                flashMode: viewModel.flashMode,
-                flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
-                canChangeFlashMode: viewModel.canChangeFlashMode,
-                canCapturePhoto: viewModel.canCapturePhoto,
-                canSwitchCamera: viewModel.canSwitchCamera,
-                onFlash: changeFlashMode,
-                onCapture: capturePhoto,
-                onSwitchCamera: switchCamera
-            )
-            .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-            .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
         }
     }
 

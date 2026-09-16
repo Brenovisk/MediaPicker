@@ -13,6 +13,7 @@ import UIKit
 /** Displays the captured file until the user confirms it or requests a retake. */
 struct CapturedPhotoReview: View {
 
+    @GestureState private var hidesControls = false
     @State private var image: UIImage?
     let media: CapturedMedia
     let onRetake: () -> Void
@@ -20,14 +21,27 @@ struct CapturedPhotoReview: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-
             if let image {
+                reviewBackground(image)
+
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
                     .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
+
+                controls
+                    .opacity(hidesControls ? .zero : 1)
+                    .allowsHitTesting(hidesControls == false)
+                    .animation(
+                        .easeOut(
+                            duration: CameraPreviewConstants.Motion
+                                .reviewControlsVisibilityDuration
+                        ),
+                        value: hidesControls
+                    )
             } else {
+                Color.black.ignoresSafeArea()
+
                 ProgressView()
                     .tint(.white)
             }
@@ -35,7 +49,26 @@ struct CapturedPhotoReview: View {
         .task(id: media.id) {
             image = await CapturedPhotoReviewImageLoader.load(from: media.contentURL)
         }
-        .safeAreaInset(edge: .bottom) {
+        .simultaneousGesture(reviewLongPressGesture)
+    }
+
+    private func reviewBackground(_ image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .blur(radius: CameraPreviewConstants.Layout.reviewBackgroundBlurRadius)
+            .overlay {
+                Color.black.opacity(
+                    CameraPreviewConstants.Layout.reviewBackgroundOpacity
+                )
+            }
+            .ignoresSafeArea()
+    }
+
+    private var controls: some View {
+        VStack {
+            Spacer(minLength: .zero)
+
             HStack(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing) {
                 reviewButton(
                     MediaPickerConstants.Text.retakePhoto.value,
@@ -47,7 +80,18 @@ struct CapturedPhotoReview: View {
                 )
             }
             .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-            .padding(.vertical, CameraPreviewConstants.Layout.verticalPadding)
+            .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
+        }
+    }
+
+    private var reviewLongPressGesture: some Gesture {
+        LongPressGesture(
+            minimumDuration: CameraPreviewConstants.Motion.reviewLongPressDuration
+        )
+        .sequenced(before: DragGesture(minimumDistance: .zero))
+        .updating($hidesControls) { value, state, _ in
+            guard case .second(true, _) = value else { return }
+            state = true
         }
     }
 

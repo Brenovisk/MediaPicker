@@ -14,7 +14,7 @@ struct CameraPreviewConstantsTests {
     @Test func switchCameraIconProvidesItsSystemName() {
         #expect(
             CameraPreviewConstants.Icon.switchCamera.systemName
-                == "arrow.triangle.2.circlepath.camera"
+                == "arrow.triangle.2.circlepath"
         )
     }
 
