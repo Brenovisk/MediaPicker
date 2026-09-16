@@ -139,6 +139,20 @@ final class CameraPreviewViewModel {
         }
     }
 
+    // MARK: State
+
+    func apply(_ snapshot: CameraSessionSnapshot) {
+        cameraState = snapshot.state
+        isPhotoCaptureAvailable = snapshot.canCapturePhoto
+        lightingCapabilities = snapshot.lightingCapabilities
+        flashMode = snapshot.flashMode
+        torchMode = snapshot.torchMode
+
+        if let position = snapshot.position {
+            activePosition = position
+        }
+    }
+
 }
 
 // MARK: Helper Methods
@@ -260,20 +274,6 @@ extension CameraPreviewViewModel {
 
         withTransaction(transaction) {
             previewRotationDegrees = .zero
-        }
-    }
-
-    // MARK: State
-
-    func apply(_ snapshot: CameraSessionSnapshot) {
-        cameraState = snapshot.state
-        isPhotoCaptureAvailable = snapshot.canCapturePhoto
-        lightingCapabilities = snapshot.lightingCapabilities
-        flashMode = snapshot.flashMode
-        torchMode = snapshot.torchMode
-
-        if let position = snapshot.position {
-            activePosition = position
         }
     }
 
