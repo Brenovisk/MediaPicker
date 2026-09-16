@@ -3,6 +3,12 @@ import Testing
 
 struct MediaSourceTests {
 
+    @Test func descriptionsExposeReadableSourceNames() {
+        #expect(MediaSource.camera.description == "camera")
+        #expect(MediaSource.photoLibrary.description == "photo library")
+        #expect(MediaSource.cameraAndPhotoLibrary.description == "camera and photo library")
+    }
+
     @Test func cameraCanBeConfiguredIndependently() {
         let sources: MediaSource = .camera
 

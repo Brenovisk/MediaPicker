@@ -12,19 +12,25 @@ import SwiftUI
 extension CameraPreviewViewModel {
 
     var canSwitchCamera: Bool {
-        controlsAreReady
+        controlsAreReady && isReviewingPhoto == false
     }
 
     var canCapturePhoto: Bool {
-        controlsAreReady && isPhotoCaptureAvailable
+        controlsAreReady && isPhotoCaptureAvailable && isReviewingPhoto == false
     }
 
     var canChangeFlashMode: Bool {
-        controlsAreReady && lightingCapabilities.flashModes.count > 1
+        controlsAreReady
+            && lightingCapabilities.flashModes.count > 1
+            && isReviewingPhoto == false
     }
 
     var canClose: Bool {
         isCapturingPhoto == false && isSwitchingCamera == false
+    }
+
+    var isReviewingPhoto: Bool {
+        capturedMedia != nil
     }
 
     var showsPreparationIndicator: Bool {
@@ -48,13 +54,16 @@ extension CameraPreviewViewModel {
         }
 
         isCapturingPhoto = true
+        captureFeedbackTrigger += 1
         showShutterFeedback()
         defer { isCapturingPhoto = false }
 
-        return try await capturePhotoUseCase.execute(
+        let media = try await capturePhotoUseCase.execute(
             format: photoOutputFormat,
             rotationAngle: previewSurface.rotationAngles.capture
         )
+        capturedMedia = media
+        return media
     }
 
     func selectNextFlashMode() async throws {
@@ -66,8 +75,27 @@ extension CameraPreviewViewModel {
         let nextIndex = modes.index(after: currentIndex)
         let selectedIndex = nextIndex == modes.endIndex ? modes.startIndex : nextIndex
         let snapshot = try await setFlashModeUseCase.execute(mode: modes[selectedIndex])
-    
         apply(snapshot)
+    }
+
+    func prepareCameraSwitchFeedback() {
+        guard canSwitchCamera else { return }
+        switchFeedbackTrigger += 1
+    }
+
+    func recapturePhoto() {
+        discardCapturedPhoto()
+    }
+
+    func confirmCapturedPhoto() -> CapturedMedia? {
+        defer { capturedMedia = nil }
+        return capturedMedia
+    }
+
+    func discardCapturedPhoto() {
+        guard let capturedMedia else { return }
+        discardCapturedMediaUseCase.execute(media: capturedMedia)
+        self.capturedMedia = nil
     }
 
     private var controlsAreReady: Bool {

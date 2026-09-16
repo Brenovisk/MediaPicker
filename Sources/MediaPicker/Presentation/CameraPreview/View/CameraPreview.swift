@@ -11,7 +11,7 @@ import SwiftUI
 /**
  Displays the live camera feed and accessible photo controls.
 
- `onCapture` receives a temporary-file result after a successful photo capture.
+ `onCapture` receives a temporary-file result after the user confirms the photo.
  `onCancel` runs after the camera session has closed successfully.
 */
 public struct CameraPreview: View {
@@ -38,6 +38,46 @@ public struct CameraPreview: View {
     }
 
     public var body: some View {
+        ZStack {
+            liveCamera
+
+            if let capturedMedia = viewModel.capturedMedia {
+                CapturedPhotoReview(
+                    media: capturedMedia,
+                    onRetake: viewModel.recapturePhoto,
+                    onConfirm: confirmPhoto
+                )
+                .transition(.opacity)
+            }
+        }
+        .animation(
+            .easeOut(duration: CameraPreviewConstants.Motion.reviewTransitionDuration),
+            value: viewModel.isReviewingPhoto
+        )
+        .sensoryFeedback(
+            .impact(weight: .medium),
+            trigger: viewModel.captureFeedbackTrigger
+        )
+        .sensoryFeedback(
+            .impact(weight: .light),
+            trigger: viewModel.switchFeedbackTrigger
+        )
+        .task {
+            try? await viewModel.open()
+        }
+        .onDisappear {
+            Task {
+                try? await viewModel.close()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            Task {
+                try? await viewModel.updateSession(for: phase)
+            }
+        }
+    }
+
+    private var liveCamera: some View {
         Group {
             if let previewSession = viewModel.previewSession {
                 CameraPreviewRepresentable(
@@ -61,7 +101,11 @@ public struct CameraPreview: View {
                 .ignoresSafeArea()
         }
         .safeAreaInset(edge: .top) {
-            topBar
+            CameraPreviewTopBar(
+                canClose: viewModel.canClose,
+                showsPreparationIndicator: viewModel.showsPreparationIndicator,
+                onClose: close
+            )
         }
         .safeAreaInset(edge: .bottom) {
             CameraPreviewControls(
@@ -77,40 +121,6 @@ public struct CameraPreview: View {
             .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
             .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
         }
-        .task {
-            try? await viewModel.open()
-        }
-        .onDisappear {
-            Task {
-                try? await viewModel.close()
-            }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            Task {
-                try? await viewModel.updateSession(for: phase)
-            }
-        }
-    }
-
-    private var topBar: some View {
-        HStack(spacing: CameraPreviewConstants.Layout.progressSpacing) {
-            Button(action: close) {
-                CameraPreviewConstants.Icon.close.styledImage
-            }
-            .buttonStyle(CameraControlButtonStyle())
-            .disabled(viewModel.canClose == false)
-            .accessibilityLabel(MediaPickerConstants.Text.closeCamera.value)
-
-            Spacer()
-
-            if viewModel.showsPreparationIndicator {
-                ProgressView()
-                    .tint(.white)
-                    .accessibilityLabel(MediaPickerConstants.Text.preparingCamera.value)
-            }
-        }
-        .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-        .padding(.top, CameraPreviewConstants.Layout.verticalPadding)
     }
 
 }
@@ -121,13 +131,13 @@ extension CameraPreview {
         guard viewModel.canCapturePhoto else { return }
 
         Task {
-            guard let media = try? await viewModel.capturePhoto() else { return }
-            onCapture(media)
+            _ = try? await viewModel.capturePhoto()
         }
     }
 
     private func switchCamera() {
         guard viewModel.canSwitchCamera else { return }
+        viewModel.prepareCameraSwitchFeedback()
 
         Task {
             try? await viewModel.switchCamera()
@@ -147,6 +157,12 @@ extension CameraPreview {
             guard (try? await viewModel.close()) != nil else { return }
             onCancel()
         }
+    }
+
+    private func confirmPhoto() {
+        guard let media = viewModel.confirmCapturedPhoto() else { return }
+        CapturedMediaDebugLogger.logConfirmation(of: media)
+        onCapture(media)
     }
 
 }

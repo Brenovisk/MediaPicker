@@ -10,7 +10,9 @@ enum MediaPickerConstants {
         case flashOff
         case flashOn
         case preparingCamera
+        case retakePhoto
         case switchCamera
+        case usePhoto
 
         case photoCaptureFailed
         case videoRecordingFailed
@@ -80,8 +82,12 @@ extension MediaPickerConstants.Text {
             return "Flash on"
         case .preparingCamera:
             return "Preparing camera"
+        case .retakePhoto:
+            return "Retake"
         case .switchCamera:
             return "Switch camera"
+        case .usePhoto:
+            return "Use Photo"
 
         case .photoCaptureFailed:
             return "MediaPicker could not capture the photo."

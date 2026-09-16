@@ -16,12 +16,15 @@ enum CameraPreviewConstants {
         static let shutterInnerInset: CGFloat = 6
         static let minimumTapTarget: CGFloat = 44
         static let horizontalPadding: CGFloat = 24
-        static let verticalPadding: CGFloat = 20
+        static let verticalPadding: CGFloat = 24
         static let controlsSpacing: CGFloat = 24
         static let controlsBackgroundOpacity = 0.42
         static let controlsCornerRadius: CGFloat = 28
         static let controlsMaximumWidth: CGFloat = 520
         static let progressSpacing: CGFloat = 8
+        static let controlHorizontalPadding: CGFloat = 12
+        static let reviewControlsSpacing: CGFloat = 16
+        static let reviewMaximumPixelSize: CGFloat = 2_048
     }
 
     enum Motion {
@@ -41,6 +44,7 @@ enum CameraPreviewConstants {
         static let buttonAnimationDuration = 0.16
         static let shutterFeedbackDuration = 0.12
         static let shutterFeedbackOpacity = 0.72
+        static let reviewTransitionDuration = 0.12
     }
 
     enum Icon {

@@ -56,3 +56,22 @@ public struct MediaSource: OptionSet, Sendable, Hashable {
     private static let presentationOrder: [MediaSource] = [.camera, .photoLibrary]
 
 }
+
+extension MediaSource: CustomStringConvertible {
+
+    public var description: String {
+        switch self {
+        case .camera:
+            "camera"
+        case .photoLibrary:
+            "photo library"
+        case .cameraAndPhotoLibrary:
+            "camera and photo library"
+        case []:
+            "none"
+        default:
+            "unknown (raw value: \(rawValue))"
+        }
+    }
+
+}

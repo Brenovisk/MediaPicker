@@ -3,6 +3,12 @@ import Testing
 
 struct MediaTypeTests {
 
+    @Test func descriptionsExposeReadableMediaTypeNames() {
+        #expect(MediaType.photo.description == "photo")
+        #expect(MediaType.video.description == "video")
+        #expect(MediaType.photoAndVideo.description == "photo and video")
+    }
+
     @Test func photoCanBeRepresentedIndependently() {
         let mediaTypes: MediaType = .photo
 

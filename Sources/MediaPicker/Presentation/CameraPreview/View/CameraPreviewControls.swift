@@ -52,17 +52,7 @@ struct CameraPreviewControls: View {
 
     private var shutterButton: some View {
         Button(action: onCapture) {
-            Circle()
-                .fill(.white)
-                .padding(CameraPreviewConstants.Layout.shutterInnerInset)
-                .overlay {
-                    Circle().stroke(.white, lineWidth: 3)
-                }
-                .frame(
-                    width: CameraPreviewConstants.Layout.shutterSize,
-                    height: CameraPreviewConstants.Layout.shutterSize
-                )
-                .contentShape(Circle())
+            CameraShutterButtonLabel()
         }
         .buttonStyle(CameraControlButtonStyle())
         .disabled(canCapturePhoto == false)
@@ -76,6 +66,34 @@ struct CameraPreviewControls: View {
         .buttonStyle(CameraControlButtonStyle())
         .disabled(canSwitchCamera == false)
         .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)
+    }
+
+}
+
+private struct CameraShutterButtonLabel: View {
+
+    var body: some View {
+        if #available(iOS 26.0, *) {
+            shutter
+                .glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            shutter
+                .background(.ultraThinMaterial, in: Circle())
+        }
+    }
+
+    private var shutter: some View {
+        Circle()
+            .fill(.white.opacity(0.96))
+            .padding(CameraPreviewConstants.Layout.shutterInnerInset)
+            .overlay {
+                Circle().stroke(.white.opacity(0.9), lineWidth: 3)
+            }
+            .frame(
+                width: CameraPreviewConstants.Layout.shutterSize,
+                height: CameraPreviewConstants.Layout.shutterSize
+            )
+            .contentShape(Circle())
     }
 
 }

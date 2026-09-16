@@ -121,6 +121,61 @@ struct CameraPreviewViewModelTests {
         #expect(client.capturedPhotoFormats == [.png])
     }
 
+    @Test func capturedPhotoWaitsForConfirmationWithoutBeingDiscarded() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let discarder = CapturedMediaDiscarderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                mediaDiscarder: discarder
+            )
+        )
+        try await viewModel.open()
+
+        let capturedMedia = try await viewModel.capturePhoto()
+
+        #expect(viewModel.capturedMedia == capturedMedia)
+        #expect(viewModel.isReviewingPhoto)
+        #expect(viewModel.canCapturePhoto == false)
+        #expect(viewModel.captureFeedbackTrigger == 1)
+        #expect(viewModel.confirmCapturedPhoto() == capturedMedia)
+        #expect(viewModel.confirmCapturedPhoto() == nil)
+        #expect(discarder.discardedMedia.isEmpty)
+    }
+
+    @Test func retakeDiscardsPendingPhotoAndReturnsToCamera() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let discarder = CapturedMediaDiscarderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                mediaDiscarder: discarder
+            )
+        )
+        try await viewModel.open()
+        let capturedMedia = try await viewModel.capturePhoto()
+
+        viewModel.recapturePhoto()
+
+        #expect(viewModel.capturedMedia == nil)
+        #expect(viewModel.canCapturePhoto)
+        #expect(discarder.discardedMedia == [capturedMedia])
+    }
+
     @Test func activeCameraPositionUpdatesAfterSwitch() async throws {
         let client = CaptureSessionClientSpy()
         let service = CaptureSessionService(operations: client.operations)
@@ -130,9 +185,11 @@ struct CameraPreviewViewModelTests {
         )
         try await viewModel.open()
 
+        viewModel.prepareCameraSwitchFeedback()
         try await viewModel.switchCamera()
 
         #expect(viewModel.activePosition == .front)
+        #expect(viewModel.switchFeedbackTrigger == 1)
         #expect(viewModel.canSwitchCamera)
         #expect(viewModel.previewBlurRadius == .zero)
         #expect(viewModel.previewOpacity == 1)

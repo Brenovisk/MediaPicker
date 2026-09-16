@@ -21,6 +21,7 @@ final class CameraPreviewViewModel {
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
     let capturePhotoUseCase: CapturePhotoUseCase
+    let discardCapturedMediaUseCase: DiscardCapturedMediaUseCase
     let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
@@ -38,6 +39,9 @@ final class CameraPreviewViewModel {
     private(set) var isSwitchingCamera = false
     var isCapturingPhoto = false
     var shutterFeedbackOpacity = 0.0
+    var captureFeedbackTrigger = 0
+    var switchFeedbackTrigger = 0
+    var capturedMedia: CapturedMedia?
 
     private(set) var previewBlurRadius: CGFloat = .zero
     private(set) var privacyBlurRadius: CGFloat = .zero
@@ -51,8 +55,9 @@ final class CameraPreviewViewModel {
     init(
         initialPosition: CameraPosition,
         photoOutputFormat: PhotoOutputFormat = .jpeg,
-        dependencies: CameraPreviewDependencies = .live()
+        dependencies: CameraPreviewDependencies? = nil
     ) {
+        let dependencies = dependencies ?? .live()
         self.initialPosition = initialPosition
         self.photoOutputFormat = photoOutputFormat
         activePosition = initialPosition
@@ -64,6 +69,7 @@ final class CameraPreviewViewModel {
         updateCameraSessionUseCase = dependencies.updateCameraSession
         switchCameraUseCase = dependencies.switchCamera
         capturePhotoUseCase = dependencies.capturePhoto
+        discardCapturedMediaUseCase = dependencies.discardCapturedMedia
         setFlashModeUseCase = dependencies.setFlashMode
         setTorchModeUseCase = dependencies.setTorchMode
     }
@@ -85,6 +91,7 @@ final class CameraPreviewViewModel {
     }
 
     func close() async throws {
+        discardCapturedPhoto()
         stopObservingSessionUpdates()
         let snapshot = try await closeCameraUseCase.execute()
         apply(snapshot)

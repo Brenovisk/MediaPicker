@@ -52,6 +52,14 @@ struct TemporaryMediaFileStore: Sendable {
 
 }
 
+extension TemporaryMediaFileStore: CapturedMediaDiscarding {
+
+    func discard(_ media: CapturedMedia) {
+        remove(media.contentURL)
+    }
+
+}
+
 enum TemporaryMediaFileStoreError: Error {
     case writeFailed
 }
