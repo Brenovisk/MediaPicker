@@ -20,31 +20,43 @@ struct CapturedPhotoReview: View {
     let onConfirm: () -> Void
 
     var body: some View {
-        ZStack {
-            if let image {
-                reviewBackground(image)
+        GeometryReader { proxy in
+            ZStack {
+                if let image {
+                    reviewBackground(image)
 
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(
+                            width: proxy.size.width,
+                            height: proxy.size.height
+                        )
+                        .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
 
-                controls
-                    .opacity(hidesControls ? .zero : 1)
-                    .allowsHitTesting(hidesControls == false)
-                    .animation(
-                        .easeOut(
-                            duration: CameraPreviewConstants.Motion
-                                .reviewControlsVisibilityDuration
-                        ),
-                        value: hidesControls
-                    )
-            } else {
-                Color.black.ignoresSafeArea()
+                    controls
+                        .frame(
+                            width: proxy.size.width,
+                            height: proxy.size.height,
+                            alignment: .bottom
+                        )
+                        .opacity(hidesControls ? .zero : 1)
+                        .allowsHitTesting(hidesControls == false)
+                        .animation(
+                            .easeOut(
+                                duration: CameraPreviewConstants.Motion
+                                    .reviewControlsVisibilityDuration
+                            ),
+                            value: hidesControls
+                        )
+                } else {
+                    Color.black.ignoresSafeArea()
 
-                ProgressView()
-                    .tint(.white)
+                    ProgressView()
+                        .tint(.white)
+                }
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .task(id: media.id) {
             image = await CapturedPhotoReviewImageLoader.load(from: media.contentURL)
@@ -66,22 +78,18 @@ struct CapturedPhotoReview: View {
     }
 
     private var controls: some View {
-        VStack {
-            Spacer(minLength: .zero)
-
-            HStack(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing) {
-                reviewButton(
-                    MediaPickerConstants.Text.retakePhoto.value,
-                    action: onRetake
-                )
-                reviewButton(
-                    MediaPickerConstants.Text.usePhoto.value,
-                    action: onConfirm
-                )
-            }
-            .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-            .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
+        HStack(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing) {
+            reviewButton(
+                MediaPickerConstants.Text.retakePhoto.value,
+                action: onRetake
+            )
+            reviewButton(
+                MediaPickerConstants.Text.usePhoto.value,
+                action: onConfirm
+            )
         }
+        .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
+        .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
     }
 
     private var reviewLongPressGesture: some Gesture {
@@ -96,14 +104,20 @@ struct CapturedPhotoReview: View {
     }
 
     private func reviewButton(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(title, action: action)
-            .font(.headline)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: CameraPreviewConstants.Layout.minimumTapTarget)
-            .padding(.horizontal, CameraPreviewConstants.Layout.controlHorizontalPadding)
-            .background(.ultraThinMaterial, in: Capsule())
-            .buttonStyle(CameraControlButtonStyle())
+        Button(action: action) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: CameraPreviewConstants.Layout.minimumTapTarget)
+                .padding(
+                    .horizontal,
+                    CameraPreviewConstants.Layout.controlHorizontalPadding
+                )
+                .background(.ultraThinMaterial, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(CameraControlButtonStyle())
     }
 
 }
