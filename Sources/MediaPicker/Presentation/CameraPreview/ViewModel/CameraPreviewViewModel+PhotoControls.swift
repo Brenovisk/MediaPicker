@@ -62,8 +62,20 @@ extension CameraPreviewViewModel {
             format: photoOutputFormat,
             rotationAngle: previewSurface.rotationAngles.capture
         )
+        capturedPhotoPreview = nil
         capturedMedia = media
         return media
+    }
+
+    func loadCapturedPhotoPreview() async {
+        guard let media = capturedMedia else { return }
+
+        let preview = await loadPhotoPreviewUseCase.execute(
+            from: media.contentURL,
+            maximumPixelSize: CameraPreviewConstants.Layout.reviewMaximumPixelSize
+        )
+        guard capturedMedia?.id == media.id else { return }
+        capturedPhotoPreview = preview
     }
 
     func selectNextFlashMode() async throws {
@@ -88,7 +100,10 @@ extension CameraPreviewViewModel {
     }
 
     func confirmCapturedPhoto() -> CapturedMedia? {
-        defer { capturedMedia = nil }
+        defer {
+            capturedMedia = nil
+            capturedPhotoPreview = nil
+        }
         return capturedMedia
     }
 
@@ -96,6 +111,7 @@ extension CameraPreviewViewModel {
         guard let capturedMedia else { return }
         discardCapturedMediaUseCase.execute(media: capturedMedia)
         self.capturedMedia = nil
+        capturedPhotoPreview = nil
     }
 
     private var controlsAreReady: Bool {

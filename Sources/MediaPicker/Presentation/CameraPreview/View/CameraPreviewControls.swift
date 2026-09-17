@@ -11,6 +11,13 @@ import SwiftUI
 /** Renders accessible photo controls from state supplied by the preview. */
 struct CameraPreviewControls: View {
 
+    enum Layout: Equatable {
+        case horizontal
+        case vertical
+    }
+
+    let layout: Layout
+    let rotationDegrees: Double
     let flashMode: CameraFlashMode
     let flashAccessibilityLabel: String
     let canChangeFlashMode: Bool
@@ -20,17 +27,59 @@ struct CameraPreviewControls: View {
     let onCapture: () -> Void
     let onSwitchCamera: () -> Void
 
+    init(
+        layout: Layout = .horizontal,
+        rotationDegrees: Double = .zero,
+        flashMode: CameraFlashMode,
+        flashAccessibilityLabel: String,
+        canChangeFlashMode: Bool,
+        canCapturePhoto: Bool,
+        canSwitchCamera: Bool,
+        onFlash: @escaping () -> Void,
+        onCapture: @escaping () -> Void,
+        onSwitchCamera: @escaping () -> Void
+    ) {
+        self.layout = layout
+        self.rotationDegrees = rotationDegrees
+        self.flashMode = flashMode
+        self.flashAccessibilityLabel = flashAccessibilityLabel
+        self.canChangeFlashMode = canChangeFlashMode
+        self.canCapturePhoto = canCapturePhoto
+        self.canSwitchCamera = canSwitchCamera
+        self.onFlash = onFlash
+        self.onCapture = onCapture
+        self.onSwitchCamera = onSwitchCamera
+    }
+
     var body: some View {
-        HStack(spacing: CameraPreviewConstants.Layout.controlsSpacing) {
+        controlsLayout {
             flashButton
             Spacer(minLength: .zero)
             shutterButton
             Spacer(minLength: .zero)
             switchCameraButton
         }
+        .frame(
+            maxWidth: layout == .horizontal
+                ? CameraPreviewConstants.Layout.controlsMaximumWidth
+                : .infinity,
+            maxHeight: layout == .vertical ? .infinity : nil
+        )
         .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
         .padding(.vertical, CameraPreviewConstants.Layout.verticalPadding)
-        .frame(maxWidth: CameraPreviewConstants.Layout.controlsMaximumWidth)
+    }
+
+    private var controlsLayout: AnyLayout {
+        switch layout {
+        case .horizontal:
+            AnyLayout(
+                HStackLayout(spacing: CameraPreviewConstants.Layout.controlsSpacing)
+            )
+        case .vertical:
+            AnyLayout(
+                VStackLayout(spacing: CameraPreviewConstants.Layout.controlsSpacing)
+            )
+        }
     }
 
     private var flashButton: some View {
@@ -39,6 +88,7 @@ struct CameraPreviewControls: View {
         }
         .buttonStyle(CameraControlButtonStyle())
         .disabled(canChangeFlashMode == false)
+        .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(flashAccessibilityLabel)
         .accessibilityValue(flashAccessibilityLabel)
     }
@@ -49,6 +99,7 @@ struct CameraPreviewControls: View {
         }
         .buttonStyle(CameraControlButtonStyle())
         .disabled(canCapturePhoto == false)
+        .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
     }
 
@@ -58,6 +109,7 @@ struct CameraPreviewControls: View {
         }
         .buttonStyle(CameraControlButtonStyle())
         .disabled(canSwitchCamera == false)
+        .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)
     }
 

@@ -176,6 +176,34 @@ struct CameraPreviewViewModelTests {
         #expect(discarder.discardedMedia == [capturedMedia])
     }
 
+    @Test func capturedPhotoPreviewIsLoadedThroughItsUseCase() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let loader = PhotoPreviewLoaderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                photoPreviewLoader: loader
+            )
+        )
+        try await viewModel.open()
+        let media = try await viewModel.capturePhoto()
+
+        await viewModel.loadCapturedPhotoPreview()
+
+        #expect(await loader.receivedURL == media.contentURL)
+        #expect(
+            await loader.receivedMaximumPixelSize
+                == CameraPreviewConstants.Layout.reviewMaximumPixelSize
+        )
+    }
+
     @Test func activeCameraPositionUpdatesAfterSwitch() async throws {
         let client = CaptureSessionClientSpy()
         let service = CaptureSessionService(operations: client.operations)

@@ -21,6 +21,7 @@ final class CameraPreviewViewModel {
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
     let capturePhotoUseCase: CapturePhotoUseCase
+    let loadPhotoPreviewUseCase: LoadPhotoPreviewUseCase
     let discardCapturedMediaUseCase: DiscardCapturedMediaUseCase
     let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
@@ -42,6 +43,7 @@ final class CameraPreviewViewModel {
     var captureFeedbackTrigger = 0
     var switchFeedbackTrigger = 0
     var capturedMedia: CapturedMedia?
+    var capturedPhotoPreview: PhotoPreviewImage?
 
     private(set) var previewBlurRadius: CGFloat = .zero
     private(set) var privacyBlurRadius: CGFloat = .zero
@@ -69,6 +71,7 @@ final class CameraPreviewViewModel {
         updateCameraSessionUseCase = dependencies.updateCameraSession
         switchCameraUseCase = dependencies.switchCamera
         capturePhotoUseCase = dependencies.capturePhoto
+        loadPhotoPreviewUseCase = dependencies.loadPhotoPreview
         discardCapturedMediaUseCase = dependencies.discardCapturedMedia
         setFlashModeUseCase = dependencies.setFlashMode
         setTorchModeUseCase = dependencies.setTorchMode

@@ -6,7 +6,9 @@
 //
 
 #if os(iOS)
+import Combine
 import SwiftUI
+import UIKit
 
 /**
  Displays the live camera feed and accessible photo controls.
@@ -17,6 +19,7 @@ import SwiftUI
 public struct CameraPreview: View {
 
     @Environment(\.scenePhase) private var scenePhase
+    @State private var landscapeSide = CameraLandscapeSide.current
     @State private var viewModel: CameraPreviewViewModel
     private let onCapture: (CapturedMedia) -> Void
     private let onCancel: () -> Void
@@ -43,11 +46,14 @@ public struct CameraPreview: View {
 
             if let capturedMedia = viewModel.capturedMedia {
                 CapturedPhotoReview(
-                    media: capturedMedia,
+                    image: viewModel.capturedPhotoPreview,
                     onRetake: viewModel.recapturePhoto,
                     onConfirm: confirmPhoto
                 )
                 .transition(.opacity)
+                .task(id: capturedMedia.id) {
+                    await viewModel.loadCapturedPhotoPreview()
+                }
             }
         }
         .animation(
@@ -65,7 +71,19 @@ public struct CameraPreview: View {
         .task {
             try? await viewModel.open()
         }
+        .onAppear {
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            updateLandscapeSide()
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: UIDevice.orientationDidChangeNotification
+            )
+        ) { _ in
+            updateLandscapeSide()
+        }
         .onDisappear {
+            UIDevice.current.endGeneratingDeviceOrientationNotifications()
             Task {
                 try? await viewModel.close()
             }
@@ -78,33 +96,65 @@ public struct CameraPreview: View {
     }
 
     private var liveCamera: some View {
-        ZStack {
-            cameraFeed
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            let orientation = CameraPreviewOrientation(
+                size: proxy.size,
+                landscapeSide: landscapeSide
+            )
 
-            VStack(spacing: .zero) {
-                CameraPreviewTopBar(
-                    canClose: viewModel.canClose,
-                    showsPreparationIndicator: viewModel.showsPreparationIndicator,
-                    onClose: close
+            CameraPreviewLayout(orientation: orientation) {
+                topBar(
+                    placement: orientation.topBarPlacement,
+                    rotationDegrees: orientation.controlRotationDegrees
                 )
-                .frame(maxWidth: .infinity)
 
-                Spacer(minLength: .zero)
+                cameraFeed
 
-                CameraPreviewControls(
-                    flashMode: viewModel.flashMode,
-                    flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
-                    canChangeFlashMode: viewModel.canChangeFlashMode,
-                    canCapturePhoto: viewModel.canCapturePhoto,
-                    canSwitchCamera: viewModel.canSwitchCamera,
-                    onFlash: changeFlashMode,
-                    onCapture: capturePhoto,
-                    onSwitchCamera: switchCamera
+                cameraControls(
+                    layout: orientation.controlsLayout,
+                    rotationDegrees: orientation.controlRotationDegrees
                 )
-                .frame(maxWidth: .infinity)
             }
         }
+        .background(Color.black.ignoresSafeArea())
+    }
+
+    private func topBar(
+        placement: CameraPreviewTopBar.Placement,
+        rotationDegrees: Double
+    ) -> some View {
+        CameraPreviewTopBar(
+            placement: placement,
+            canClose: viewModel.canClose,
+            showsPreparationIndicator: viewModel.showsPreparationIndicator,
+            rotationDegrees: rotationDegrees,
+            onClose: close
+        )
+    }
+
+    private func cameraControls(
+        layout: CameraPreviewControls.Layout,
+        rotationDegrees: Double
+    ) -> some View {
+        CameraPreviewControls(
+            layout: layout,
+            rotationDegrees: rotationDegrees,
+            flashMode: viewModel.flashMode,
+            flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
+            canChangeFlashMode: viewModel.canChangeFlashMode,
+            canCapturePhoto: viewModel.canCapturePhoto,
+            canSwitchCamera: viewModel.canSwitchCamera,
+            onFlash: changeFlashMode,
+            onCapture: capturePhoto,
+            onSwitchCamera: switchCamera
+        )
+    }
+
+    private func updateLandscapeSide() {
+        guard let side = CameraLandscapeSide(
+            deviceOrientation: UIDevice.current.orientation
+        ) else { return }
+        landscapeSide = side
     }
 
     private var cameraFeed: some View {
@@ -172,6 +222,26 @@ extension CameraPreview {
         guard let media = viewModel.confirmCapturedPhoto() else { return }
         CapturedMediaDebugLogger.logConfirmation(of: media)
         onCapture(media)
+    }
+
+}
+
+private extension CameraLandscapeSide {
+
+    @MainActor
+    static var current: CameraLandscapeSide {
+        CameraLandscapeSide(deviceOrientation: UIDevice.current.orientation) ?? .left
+    }
+
+    init?(deviceOrientation: UIDeviceOrientation) {
+        switch deviceOrientation {
+        case .landscapeLeft:
+            self = .left
+        case .landscapeRight:
+            self = .right
+        default:
+            return nil
+        }
     }
 
 }

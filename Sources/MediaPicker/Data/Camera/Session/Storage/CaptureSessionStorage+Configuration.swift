@@ -31,10 +31,10 @@ extension CaptureSessionStorage {
     }
 
     private func configurePreset() throws {
-        guard session.canSetSessionPreset(.high) else {
+        guard session.canSetSessionPreset(.photo) else {
             throw CaptureSessionConfigurationError.unsupportedPreset
         }
-        session.sessionPreset = .high
+        session.sessionPreset = .photo
     }
 
     private func configureVideoOutput() throws {
