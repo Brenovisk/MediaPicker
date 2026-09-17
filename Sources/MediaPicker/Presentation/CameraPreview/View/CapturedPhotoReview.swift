@@ -17,21 +17,50 @@ struct CapturedPhotoReview: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-
             if let image {
                 Image(decorative: image.cgImage, scale: 1)
                     .resizable()
                     .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
             } else {
                 ProgressView()
                     .tint(.white)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom) {
             controls
         }
+        .background {
+            background
+                .ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private var background: some View {
+        ZStack {
+            Color.black
+
+            if let image {
+                Image(decorative: image.cgImage, scale: 1)
+                    .resizable()
+                    .scaledToFill()
+                    .blur(
+                        radius: CameraPreviewConstants.Layout
+                            .reviewBackgroundImageRadiusBlur
+                    )
+                    .overlay {
+                        Color.black.opacity(
+                            CameraPreviewConstants.Layout.reviewBackgroundImageOpacity
+                        )
+                    }
+            }
+        }
+        .clipped()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private var controls: some View {

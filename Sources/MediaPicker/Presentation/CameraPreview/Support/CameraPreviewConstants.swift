@@ -26,6 +26,8 @@ enum CameraPreviewConstants {
         static let controlHorizontalPadding: CGFloat = 12
         static let reviewControlsSpacing: CGFloat = 16
         static let reviewMaximumPixelSize = 2_048
+        static let reviewBackgroundImageRadiusBlur = 24.0
+        static let reviewBackgroundImageOpacity = 0.62
     }
 
     enum Motion {
