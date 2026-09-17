@@ -16,6 +16,8 @@ struct CameraPreviewDependencies {
     let updateCameraSession: UpdateCameraSessionUseCase
     let switchCamera: SwitchCameraUseCase
     let capturePhoto: CapturePhotoUseCase
+    let loadPhotoPreview: LoadPhotoPreviewUseCase
+    let discardCapturedMedia: DiscardCapturedMediaUseCase
     let setFlashMode: SetCameraFlashModeUseCase
     let setTorchMode: SetCameraTorchModeUseCase
 
@@ -25,8 +27,11 @@ struct CameraPreviewDependencies {
 
     static func make(
         cameraSession: CaptureSessionService,
-        previewSurface: CameraPreviewSurface = CameraPreviewSurface()
+        previewSurface: CameraPreviewSurface? = nil,
+        mediaDiscarder: any CapturedMediaDiscarding = TemporaryMediaFileStore(),
+        photoPreviewLoader: any PhotoPreviewLoading = ImageIOPhotoPreviewLoader()
     ) -> CameraPreviewDependencies {
+        let previewSurface = previewSurface ?? CameraPreviewSurface()
         let openCameraUseCase = OpenCameraUseCase(cameraSession: cameraSession)
 
         let closeCameraUseCase = CloseCameraUseCase(cameraSession: cameraSession)
@@ -48,6 +53,10 @@ struct CameraPreviewDependencies {
             updateCameraSession: updateCameraSessionUseCase,
             switchCamera: switchCameraUseCase,
             capturePhoto: CapturePhotoUseCase(cameraSession: cameraSession),
+            loadPhotoPreview: LoadPhotoPreviewUseCase(loader: photoPreviewLoader),
+            discardCapturedMedia: DiscardCapturedMediaUseCase(
+                mediaDiscarder: mediaDiscarder
+            ),
             setFlashMode: SetCameraFlashModeUseCase(cameraSession: cameraSession),
             setTorchMode: SetCameraTorchModeUseCase(cameraSession: cameraSession)
         )

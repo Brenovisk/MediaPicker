@@ -14,15 +14,18 @@ final class PhotoCaptureCompletionDelegate: NSObject, AVCapturePhotoCaptureDeleg
 
     private let lock = NSLock()
     private let processor: PhotoCaptureResultProcessor
+    private let onCompletion: @Sendable () -> Void
     private var processedResult: Result<CapturedMedia, any Error>?
     private var continuation: CheckedContinuation<CapturedMedia, any Error>?
 
     init(
         processor: PhotoCaptureResultProcessor,
-        continuation: CheckedContinuation<CapturedMedia, any Error>
+        continuation: CheckedContinuation<CapturedMedia, any Error>,
+        onCompletion: @escaping @Sendable () -> Void = {}
     ) {
         self.processor = processor
         self.continuation = continuation
+        self.onCompletion = onCompletion
     }
 
     func photoOutput(
@@ -57,6 +60,7 @@ final class PhotoCaptureCompletionDelegate: NSObject, AVCapturePhotoCaptureDeleg
             }
             return (self.continuation, processedResult)
         }
+        defer { onCompletion() }
 
         guard let continuation = completion.0 else { return }
 
@@ -74,6 +78,21 @@ final class PhotoCaptureCompletionDelegate: NSObject, AVCapturePhotoCaptureDeleg
         case .failure:
             continuation.resume(throwing: MediaPickerError.photoCaptureFailed)
         }
+    }
+
+    func cancel() {
+        let completion = lock.withLock {
+            defer {
+                continuation = nil
+                processedResult = nil
+            }
+            return (continuation, processedResult)
+        }
+
+        guard let continuation = completion.0 else { return }
+        discardMedia(in: completion.1)
+        continuation.resume(throwing: MediaPickerError.photoCaptureFailed)
+        onCompletion()
     }
 
     private func discardMedia(in result: Result<CapturedMedia, any Error>?) {

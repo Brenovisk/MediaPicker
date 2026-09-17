@@ -1,14 +1,25 @@
 //
-//  CameraSwitchButtonStyle.swift
+//  AnimationButtonModifier.swift
 //  MediaPicker
 //
-//  Created by Breno Lucas on 10/09/26.
+//  Created by Breno Lucas on 14/09/26.
 //
 
-#if os(iOS)
 import SwiftUI
 
-struct CameraSwitchButtonStyle: ButtonStyle {
+#if os(iOS)
+struct AnimatedButtonModifier: ViewModifier {
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        content
+            .buttonStyle(CameraControlButtonStyle())
+    }
+
+}
+
+/** Gives camera utility controls consistent pressed feedback. */
+struct CameraControlButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -28,6 +39,16 @@ struct CameraSwitchButtonStyle: ButtonStyle {
                 ),
                 value: configuration.isPressed
             )
+    }
+
+}
+
+extension View {
+
+    func animatedButton() -> some View {
+        modifier(
+            AnimatedButtonModifier()
+        )
     }
 
 }

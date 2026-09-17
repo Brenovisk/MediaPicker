@@ -45,6 +45,7 @@ struct UpdateCameraSessionUseCaseTests {
         let expected = CameraSessionSnapshot(
             state: .interrupted(.systemPressure),
             position: .back,
+            canCapturePhoto: false,
             lightingCapabilities: .unavailable,
             flashMode: .off,
             torchMode: .off

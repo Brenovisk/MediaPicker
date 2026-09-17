@@ -14,7 +14,7 @@ import UIKit
 @MainActor
 struct CameraPreviewTests {
 
-    @Test func previewUsesProvidedSessionAndAspectFill() {
+    @Test func previewUsesProvidedSessionAndAspectFit() {
         let session = AVCaptureSession()
         let view = CameraPreviewUIKitView(
             session: session,
@@ -23,7 +23,8 @@ struct CameraPreviewTests {
         let previewLayer = view.layer as? AVCaptureVideoPreviewLayer
 
         #expect(previewLayer?.session === session)
-        #expect(previewLayer?.videoGravity == .resizeAspectFill)
+        #expect(previewLayer?.videoGravity == .resizeAspect)
+        #expect(view.backgroundColor == .black)
     }
 
     @Test func updatingPreviewDoesNotReplaceSessionOrLayer() {

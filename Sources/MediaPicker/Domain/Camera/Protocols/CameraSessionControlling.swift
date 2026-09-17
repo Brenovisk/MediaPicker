@@ -20,6 +20,7 @@ protocol CameraSessionControlling: Sendable {
 
     var state: CameraState { get async }
     var activeCameraPosition: CameraPosition? { get async }
+    var canCapturePhoto: Bool { get async }
 
     var lightingCapabilities: CameraLightingCapabilities { get async }
     var flashMode: CameraFlashMode { get async }
@@ -50,6 +51,7 @@ extension CameraSessionControlling {
         await CameraSessionSnapshot(
             state: state,
             position: activeCameraPosition,
+            canCapturePhoto: canCapturePhoto,
             lightingCapabilities: lightingCapabilities,
             flashMode: flashMode,
             torchMode: torchMode

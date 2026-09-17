@@ -16,8 +16,10 @@ struct ContentView: View {
     var body: some View {
         Group {
             if showsCameraPreview {
-                CameraPreview()
-                    .ignoresSafeArea()
+                CameraPreview(
+                    onCapture: handleCapturedPhoto,
+                    onCancel: returnToStart
+                )
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "camera")
@@ -27,7 +29,7 @@ struct ContentView: View {
                     Text(cameraAccessMessage)
                         .multilineTextAlignment(.center)
 
-                    Button("Check camera access") {
+                    Button("Open camera") {
                         Task { @MainActor in
                             await prepareCameraAccess()
                         }
@@ -54,6 +56,14 @@ extension ContentView {
         } catch {
             cameraAccessMessage = "Camera access could not be determined."
         }
+    }
+
+    private func returnToStart() {
+        showsCameraPreview = false
+    }
+
+    private func handleCapturedPhoto(_: CapturedMedia) {
+        showsCameraPreview = false
     }
 
 }

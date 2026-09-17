@@ -13,6 +13,197 @@ import Testing
 @MainActor
 struct CameraPreviewViewModelTests {
 
+    @Test func preparationIndicatorIsVisibleWhileCameraOpens() async throws {
+        let client = CaptureSessionClientSpy(operationDuration: 0.05)
+        let service = CaptureSessionService(operations: client.operations)
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: service)
+        )
+
+        let opening = Task { try await viewModel.open() }
+        await Task.yield()
+
+        #expect(viewModel.showsPreparationIndicator)
+
+        try await opening.value
+        #expect(viewModel.showsPreparationIndicator == false)
+    }
+
+    @Test func photoControlsRequireReadySessionAndPhotoOutput() async throws {
+        let unavailableClient = CaptureSessionClientSpy()
+        let unavailableService = CaptureSessionService(
+            operations: unavailableClient.operations
+        )
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: unavailableService)
+        )
+
+        #expect(viewModel.canCapturePhoto == false)
+        try await viewModel.open()
+        #expect(viewModel.canCapturePhoto == false)
+
+        let availableClient = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let availableService = CaptureSessionService(
+            operations: availableClient.operations
+        )
+        let availableViewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: availableService)
+        )
+
+        try await availableViewModel.open()
+
+        #expect(availableViewModel.canCapturePhoto)
+    }
+
+    @Test func flashControlCyclesThroughSupportedModes() async throws {
+        let capabilities = CameraLightingCapabilities(
+            flashModes: [.off, .on, .auto]
+        )
+        let client = CaptureSessionClientSpy(
+            capabilities: [capabilities],
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: capabilities.flashModes
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(cameraSession: service)
+        )
+        try await viewModel.open()
+
+        try await viewModel.selectNextFlashMode()
+        #expect(viewModel.flashMode == .on)
+        #expect(viewModel.flashAccessibilityLabel == "Flash on")
+
+        try await viewModel.selectNextFlashMode()
+        #expect(viewModel.flashMode == .auto)
+
+        try await viewModel.selectNextFlashMode()
+        #expect(viewModel.flashMode == .off)
+    }
+
+    @Test func captureUsesConfiguredFormatAndDisablesConcurrentControls() async throws {
+        let client = CaptureSessionClientSpy(
+            operationDuration: 0.05,
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            photoOutputFormat: .png,
+            dependencies: .make(cameraSession: service)
+        )
+        try await viewModel.open()
+
+        let capture = Task { try await viewModel.capturePhoto() }
+        await Task.yield()
+
+        #expect(viewModel.isCapturingPhoto)
+        #expect(viewModel.canCapturePhoto == false)
+        #expect(viewModel.canSwitchCamera == false)
+        #expect(viewModel.canClose == false)
+
+        _ = try await capture.value
+        #expect(viewModel.isCapturingPhoto == false)
+        #expect(client.capturedPhotoFormats == [.png])
+    }
+
+    @Test func capturedPhotoWaitsForConfirmationWithoutBeingDiscarded() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let discarder = CapturedMediaDiscarderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                mediaDiscarder: discarder
+            )
+        )
+        try await viewModel.open()
+
+        let capturedMedia = try await viewModel.capturePhoto()
+
+        #expect(viewModel.capturedMedia == capturedMedia)
+        #expect(viewModel.isReviewingPhoto)
+        #expect(viewModel.canCapturePhoto == false)
+        #expect(viewModel.captureFeedbackTrigger == 1)
+        #expect(viewModel.confirmCapturedPhoto() == capturedMedia)
+        #expect(viewModel.confirmCapturedPhoto() == nil)
+        #expect(discarder.discardedMedia.isEmpty)
+    }
+
+    @Test func retakeDiscardsPendingPhotoAndReturnsToCamera() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let discarder = CapturedMediaDiscarderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                mediaDiscarder: discarder
+            )
+        )
+        try await viewModel.open()
+        let capturedMedia = try await viewModel.capturePhoto()
+
+        viewModel.recapturePhoto()
+
+        #expect(viewModel.capturedMedia == nil)
+        #expect(viewModel.canCapturePhoto)
+        #expect(discarder.discardedMedia == [capturedMedia])
+    }
+
+    @Test func capturedPhotoPreviewIsLoadedThroughItsUseCase() async throws {
+        let client = CaptureSessionClientSpy(
+            photoCapabilities: CameraPhotoOutputCapabilities(
+                isAvailable: true,
+                flashModes: [.off]
+            )
+        )
+        let service = CaptureSessionService(operations: client.operations)
+        let loader = PhotoPreviewLoaderSpy()
+        let viewModel = CameraPreviewViewModel(
+            initialPosition: .back,
+            dependencies: .make(
+                cameraSession: service,
+                photoPreviewLoader: loader
+            )
+        )
+        try await viewModel.open()
+        let media = try await viewModel.capturePhoto()
+
+        await viewModel.loadCapturedPhotoPreview()
+
+        #expect(await loader.receivedURL == media.contentURL)
+        #expect(
+            await loader.receivedMaximumPixelSize
+                == CameraPreviewConstants.Layout.reviewMaximumPixelSize
+        )
+    }
+
     @Test func activeCameraPositionUpdatesAfterSwitch() async throws {
         let client = CaptureSessionClientSpy()
         let service = CaptureSessionService(operations: client.operations)
@@ -22,9 +213,11 @@ struct CameraPreviewViewModelTests {
         )
         try await viewModel.open()
 
+        viewModel.prepareCameraSwitchFeedback()
         try await viewModel.switchCamera()
 
         #expect(viewModel.activePosition == .front)
+        #expect(viewModel.switchFeedbackTrigger == 1)
         #expect(viewModel.canSwitchCamera)
         #expect(viewModel.previewBlurRadius == .zero)
         #expect(viewModel.previewOpacity == 1)

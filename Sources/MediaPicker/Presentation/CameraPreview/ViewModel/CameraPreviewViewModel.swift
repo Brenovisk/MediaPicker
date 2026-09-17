@@ -20,28 +20,35 @@ final class CameraPreviewViewModel {
     private let closeCameraUseCase: CloseCameraUseCase
     private let updateCameraSessionUseCase: UpdateCameraSessionUseCase
     private let switchCameraUseCase: SwitchCameraUseCase
-    private let capturePhotoUseCase: CapturePhotoUseCase
-    private let setFlashModeUseCase: SetCameraFlashModeUseCase
+    let capturePhotoUseCase: CapturePhotoUseCase
+    let loadPhotoPreviewUseCase: LoadPhotoPreviewUseCase
+    let discardCapturedMediaUseCase: DiscardCapturedMediaUseCase
+    let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
-    private let photoOutputFormat: PhotoOutputFormat
+    let photoOutputFormat: PhotoOutputFormat
     private var sessionUpdatesTask: Task<Void, Never>?
+    var shutterFeedbackTask: Task<Void, Never>?
     private(set) var activePosition: CameraPosition
     private(set) var cameraState: CameraState = .idle
+    private(set) var isPhotoCaptureAvailable = false
     private(set) var lightingCapabilities: CameraLightingCapabilities = .unavailable
     private(set) var flashMode: CameraFlashMode = .off
     private(set) var torchMode: CameraTorchMode = .off
+    private(set) var isOpeningCamera = false
     private(set) var isSwitchingCamera = false
+    var isCapturingPhoto = false
+    var shutterFeedbackOpacity = 0.0
+    var captureFeedbackTrigger = 0
+    var switchFeedbackTrigger = 0
+    var capturedMedia: CapturedMedia?
+    var capturedPhotoPreview: PhotoPreviewImage?
 
     private(set) var previewBlurRadius: CGFloat = .zero
     private(set) var privacyBlurRadius: CGFloat = .zero
     private(set) var previewOpacity = 1.0
     private(set) var previewRotationDegrees = 0.0
-
-    var canSwitchCamera: Bool {
-        cameraState == .ready && isSwitchingCamera == false
-    }
 
     var displayedPreviewBlurRadius: CGFloat {
         max(previewBlurRadius, privacyBlurRadius)
@@ -50,8 +57,9 @@ final class CameraPreviewViewModel {
     init(
         initialPosition: CameraPosition,
         photoOutputFormat: PhotoOutputFormat = .jpeg,
-        dependencies: CameraPreviewDependencies = .live()
+        dependencies: CameraPreviewDependencies? = nil
     ) {
+        let dependencies = dependencies ?? .live()
         self.initialPosition = initialPosition
         self.photoOutputFormat = photoOutputFormat
         activePosition = initialPosition
@@ -63,11 +71,17 @@ final class CameraPreviewViewModel {
         updateCameraSessionUseCase = dependencies.updateCameraSession
         switchCameraUseCase = dependencies.switchCamera
         capturePhotoUseCase = dependencies.capturePhoto
+        loadPhotoPreviewUseCase = dependencies.loadPhotoPreview
+        discardCapturedMediaUseCase = dependencies.discardCapturedMedia
         setFlashModeUseCase = dependencies.setFlashMode
         setTorchModeUseCase = dependencies.setTorchMode
     }
 
     func open() async throws {
+        guard isOpeningCamera == false else { return }
+
+        isOpeningCamera = true
+        defer { isOpeningCamera = false }
         observeSessionUpdates()
 
         do {
@@ -80,6 +94,7 @@ final class CameraPreviewViewModel {
     }
 
     func close() async throws {
+        discardCapturedPhoto()
         stopObservingSessionUpdates()
         let snapshot = try await closeCameraUseCase.execute()
         apply(snapshot)
@@ -99,18 +114,6 @@ final class CameraPreviewViewModel {
             cancelCameraSwitchTransition()
             throw error
         }
-    }
-
-    func capturePhoto() async throws -> CapturedMedia {
-        try await capturePhotoUseCase.execute(
-            format: photoOutputFormat,
-            rotationAngle: previewSurface.rotationAngles.capture
-        )
-    }
-
-    func setFlashMode(_ mode: CameraFlashMode) async throws {
-        let snapshot = try await setFlashModeUseCase.execute(mode: mode)
-        apply(snapshot)
     }
 
     func setTorchMode(_ mode: CameraTorchMode) async throws {
@@ -136,6 +139,20 @@ final class CameraPreviewViewModel {
             concealPreviewForPrivacy()
         @unknown default:
             concealPreviewForPrivacy()
+        }
+    }
+
+    // MARK: State
+
+    func apply(_ snapshot: CameraSessionSnapshot) {
+        cameraState = snapshot.state
+        isPhotoCaptureAvailable = snapshot.canCapturePhoto
+        lightingCapabilities = snapshot.lightingCapabilities
+        flashMode = snapshot.flashMode
+        torchMode = snapshot.torchMode
+
+        if let position = snapshot.position {
+            activePosition = position
         }
     }
 
@@ -260,19 +277,6 @@ extension CameraPreviewViewModel {
 
         withTransaction(transaction) {
             previewRotationDegrees = .zero
-        }
-    }
-
-    // MARK: State
-
-    private func apply(_ snapshot: CameraSessionSnapshot) {
-        cameraState = snapshot.state
-        lightingCapabilities = snapshot.lightingCapabilities
-        flashMode = snapshot.flashMode
-        torchMode = snapshot.torchMode
-
-        if let position = snapshot.position {
-            activePosition = position
         }
     }
 

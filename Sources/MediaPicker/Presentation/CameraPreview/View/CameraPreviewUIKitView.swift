@@ -49,8 +49,9 @@ final class CameraPreviewUIKitView: UIView {
     init(session: AVCaptureSession, frameStore: CameraPreviewFrameStore) {
         self.frameStore = frameStore
         super.init(frame: .zero)
+        backgroundColor = .black
         previewLayer?.session = session
-        previewLayer?.videoGravity = .resizeAspectFill
+        previewLayer?.videoGravity = .resizeAspect
     }
 
     @available(*, unavailable)
@@ -67,6 +68,8 @@ final class CameraPreviewUIKitView: UIView {
     // MARK: Camera Position
 
     func setCameraPosition(_ position: CameraPosition) {
+        guard cameraPosition != position || rotationCoordinator == nil else { return }
+
         cameraPosition = position
         isMirrored = position == .front
         applyMirroring()
@@ -98,7 +101,7 @@ final class CameraPreviewUIKitView: UIView {
 
         snapshot.frame = bounds
         snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        snapshot.contentMode = .scaleAspectFill
+        snapshot.contentMode = .scaleAspectFit
         snapshot.clipsToBounds = true
 
         addSubview(snapshot)
@@ -116,8 +119,12 @@ final class CameraPreviewUIKitView: UIView {
 
     private func applyMirroring() {
         guard let connection = previewLayer?.connection else { return }
-        connection.automaticallyAdjustsVideoMirroring = false
-        connection.isVideoMirrored = isMirrored
+        if connection.automaticallyAdjustsVideoMirroring {
+            connection.automaticallyAdjustsVideoMirroring = false
+        }
+        if connection.isVideoMirrored != isMirrored {
+            connection.isVideoMirrored = isMirrored
+        }
     }
 
     // MARK: Orientation
@@ -164,7 +171,8 @@ final class CameraPreviewUIKitView: UIView {
 
         guard let connection = previewLayer?.connection,
               rotationCoordinator != nil,
-              connection.isVideoRotationAngleSupported(angle) else { return }
+              connection.isVideoRotationAngleSupported(angle),
+              connection.videoRotationAngle != angle else { return }
 
         connection.videoRotationAngle = angle
     }

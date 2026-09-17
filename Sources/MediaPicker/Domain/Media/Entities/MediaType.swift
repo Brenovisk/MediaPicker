@@ -27,3 +27,22 @@ public struct MediaType: OptionSet, Sendable, Hashable {
     }
 
 }
+
+extension MediaType: CustomStringConvertible {
+
+    public var description: String {
+        switch self {
+        case .photo:
+            "photo"
+        case .video:
+            "video"
+        case .photoAndVideo:
+            "photo and video"
+        case []:
+            "none"
+        default:
+            "unknown (raw value: \(rawValue))"
+        }
+    }
+
+}

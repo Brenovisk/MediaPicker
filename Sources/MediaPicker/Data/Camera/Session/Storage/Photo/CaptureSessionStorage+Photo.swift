@@ -29,8 +29,12 @@ extension CaptureSessionStorage {
                     request: request,
                     format: options.outputFormat
                 ),
-                continuation: continuation
+                continuation: continuation,
+                onCompletion: { [photoCaptureDelegates] in
+                    photoCaptureDelegates.remove(for: request.id)
+                }
             )
+            photoCaptureDelegates.insert(delegate, for: request.id)
             photoOutput.capturePhoto(with: settings, delegate: delegate)
         }
     }

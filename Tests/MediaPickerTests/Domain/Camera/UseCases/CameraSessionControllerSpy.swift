@@ -30,6 +30,7 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
     private(set) var operations: [CameraSessionControllerOperation] = []
     private(set) var state: CameraState
     private(set) var activeCameraPosition: CameraPosition?
+    private(set) var canCapturePhoto: Bool
     private(set) var lightingCapabilities: CameraLightingCapabilities
     private(set) var flashMode: CameraFlashMode
     private(set) var torchMode: CameraTorchMode
@@ -41,6 +42,7 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         positions: [CameraPosition] = [],
         state: CameraState = .ready,
         activePosition: CameraPosition? = .back,
+        canCapturePhoto: Bool = true,
         lightingCapabilities: CameraLightingCapabilities = .unavailable,
         flashMode: CameraFlashMode = .off,
         torchMode: CameraTorchMode = .off,
@@ -52,6 +54,7 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
         self.positions = positions
         self.state = state
         activeCameraPosition = activePosition
+        self.canCapturePhoto = canCapturePhoto
         self.lightingCapabilities = lightingCapabilities
         self.flashMode = flashMode
         self.torchMode = torchMode
