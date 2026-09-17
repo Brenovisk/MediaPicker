@@ -78,9 +78,10 @@ struct CameraPreviewTopBar: View {
 
     private var closeButton: some View {
         Button(action: onClose) {
-            CameraPreviewConstants.Icon.close.styledImage
+            CameraPreviewConstants.Icon.close.image
+                .circularLabelButton()
         }
-        .buttonStyle(CameraControlButtonStyle())
+        .animatedButton()
         .disabled(canClose == false)
         .rotationEffect(.degrees(rotationDegrees))
         .accessibilityLabel(MediaPickerConstants.Text.closeCamera.value)

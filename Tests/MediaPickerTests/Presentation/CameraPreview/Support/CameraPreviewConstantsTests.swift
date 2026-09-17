@@ -20,12 +20,19 @@ struct CameraPreviewConstantsTests {
 
     @Test func controlIconsReflectTheirActionsAndFlashModes() {
         #expect(CameraPreviewConstants.Icon.close.systemName == "xmark")
+        #expect(CameraPreviewConstants.Icon.confirmPhoto.systemName == "checkmark")
         #expect(CameraPreviewConstants.Icon.flash(.off).systemName == "bolt.slash.fill")
         #expect(CameraPreviewConstants.Icon.flash(.on).systemName == "bolt.fill")
         #expect(
             CameraPreviewConstants.Icon.flash(.auto).systemName
                 == "bolt.badge.automatic.fill"
         )
+        if #available(iOS 18.0, *) {
+            #expect(
+                CameraPreviewConstants.Icon.retakePhoto.systemName
+                    == "arrow.trianglehead.2.clockwise.rotate.90.camera"
+            )
+        }
     }
 
     @Test func everyControlMeetsTheMinimumTapTarget() {

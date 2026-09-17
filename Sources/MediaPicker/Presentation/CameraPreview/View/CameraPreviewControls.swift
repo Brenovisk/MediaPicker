@@ -84,9 +84,10 @@ struct CameraPreviewControls: View {
 
     private var flashButton: some View {
         Button(action: onFlash) {
-            CameraPreviewConstants.Icon.flash(flashMode).styledImage
+            CameraPreviewConstants.Icon.flash(flashMode).image
+                .circularLabelButton()
         }
-        .buttonStyle(CameraControlButtonStyle())
+        .animatedButton()
         .disabled(canChangeFlashMode == false)
         .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(flashAccessibilityLabel)
@@ -97,7 +98,7 @@ struct CameraPreviewControls: View {
         Button(action: onCapture) {
             CameraShutterButtonLabel()
         }
-        .buttonStyle(CameraControlButtonStyle())
+        .animatedButton()
         .disabled(canCapturePhoto == false)
         .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
@@ -105,9 +106,10 @@ struct CameraPreviewControls: View {
 
     private var switchCameraButton: some View {
         Button(action: onSwitchCamera) {
-            CameraPreviewConstants.Icon.switchCamera.styledImage
+            CameraPreviewConstants.Icon.switchCamera.image
+                .circularLabelButton()
         }
-        .buttonStyle(CameraControlButtonStyle())
+        .animatedButton()
         .disabled(canSwitchCamera == false)
         .rotationEffect(.degrees(2 * rotationDegrees))
         .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)

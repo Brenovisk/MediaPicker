@@ -16,6 +16,22 @@ struct CapturedPhotoReview: View {
     let onConfirm: () -> Void
 
     var body: some View {
+        GeometryReader { proxy in
+            let isLandscape = proxy.size.width > proxy.size.height
+
+            content
+                .overlay(alignment: isLandscape ? .trailing : .bottom) {
+                    controls(isLandscape: isLandscape)
+                }
+                .background {
+                    background
+                        .ignoresSafeArea()
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         ZStack {
             if let image {
                 Image(decorative: image.cgImage, scale: 1)
@@ -29,13 +45,6 @@ struct CapturedPhotoReview: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom) {
-            controls
-        }
-        .background {
-            background
-                .ignoresSafeArea()
-        }
     }
 
     @ViewBuilder
@@ -63,36 +72,55 @@ struct CapturedPhotoReview: View {
         .accessibilityHidden(true)
     }
 
-    private var controls: some View {
-        HStack(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing) {
-            reviewButton(
-                MediaPickerConstants.Text.retakePhoto.value,
-                action: onRetake
-            )
-            reviewButton(
-                MediaPickerConstants.Text.usePhoto.value,
-                action: onConfirm
-            )
+    private func controls(isLandscape: Bool) -> some View {
+        let layout = controlsLayout(isLandscape: isLandscape)
+
+        return layout {
+            retakeButton
+            Spacer(minLength: .zero)
+            confirmButton
         }
+        .frame(
+            maxWidth: isLandscape ? nil : .infinity,
+            maxHeight: isLandscape ? .infinity : nil
+        )
         .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-        .padding(.bottom, CameraPreviewConstants.Layout.verticalPadding)
+        .padding(.vertical, CameraPreviewConstants.Layout.verticalPadding)
     }
 
-    private func reviewButton(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: CameraPreviewConstants.Layout.minimumTapTarget)
-                .padding(
-                    .horizontal,
-                    CameraPreviewConstants.Layout.controlHorizontalPadding
-                )
-                .background(.ultraThinMaterial, in: Capsule())
-                .contentShape(Capsule())
+    private func controlsLayout(isLandscape: Bool) -> AnyLayout {
+        if isLandscape {
+            AnyLayout(
+                VStackLayout(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing)
+            )
+        } else {
+            AnyLayout(
+                HStackLayout(spacing: CameraPreviewConstants.Layout.reviewControlsSpacing)
+            )
         }
-        .buttonStyle(CameraControlButtonStyle())
+    }
+
+    private var retakeButton: some View {
+        Button(action: onRetake) {
+            CameraPreviewConstants.Icon.retakePhoto.image
+                .circularLabelButton()
+        }
+        .animatedButton()
+        .accessibilityLabel(MediaPickerConstants.Text.retakePhoto.value)
+    }
+
+    private var confirmButton: some View {
+        Button(action: onConfirm) {
+            CameraPreviewConstants.Icon.confirmPhoto.image
+                .circularLabelButton(
+                    foregroundColor: .black,
+                    backgroundColor: .white,
+                    backgroundOpacity: 1,
+                    usesLiquidGlass: false
+                )
+        }
+        .animatedButton()
+        .accessibilityLabel(MediaPickerConstants.Text.usePhoto.value)
     }
 
 }

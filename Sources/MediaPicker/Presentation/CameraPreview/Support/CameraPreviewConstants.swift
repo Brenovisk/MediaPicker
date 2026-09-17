@@ -52,55 +52,38 @@ enum CameraPreviewConstants {
 
     enum Icon {
         case close
+        case confirmPhoto
         case flash(CameraFlashMode)
+        case retakePhoto
         case shutter
         case switchCamera
 
         var systemName: String {
             switch self {
             case .close:
-                "xmark"
+                return "xmark"
+            case .confirmPhoto:
+                return "checkmark"
             case .flash(.off):
-                "bolt.slash.fill"
+                return "bolt.slash.fill"
             case .flash(.on):
-                "bolt.fill"
+                return "bolt.fill"
             case .flash(.auto):
-                "bolt.badge.automatic.fill"
+                return "bolt.badge.automatic.fill"
+            case .retakePhoto:
+                if #available(iOS 18.0, *) {
+                    return "arrow.trianglehead.2.clockwise.rotate.90.camera"
+                }
+                return "arrow.triangle.2.circlepath.camera"
             case .shutter:
-                "circle"
+                return "circle"
             case .switchCamera:
-                "arrow.triangle.2.circlepath"
+                return "arrow.triangle.2.circlepath"
             }
         }
 
         var image: Image {
             Image(systemName: systemName)
-        }
-
-        @ViewBuilder
-        var styledImage: some View {
-            if #available(iOS 26.0, *) {
-                baseImage
-                    .glassEffect(.regular.interactive(), in: Circle())
-            } else {
-                baseImage
-                    .background(.ultraThinMaterial, in: Circle())
-                    .overlay {
-                        Circle()
-                            .stroke(.white.opacity(0.14), lineWidth: 1)
-                    }
-            }
-        }
-
-        private var baseImage: some View {
-            image
-                .font(.title2)
-                .foregroundStyle(.white)
-                .frame(
-                    width: CameraPreviewConstants.Layout.controlSize,
-                    height: CameraPreviewConstants.Layout.controlSize
-                )
-                .contentShape(Circle())
         }
     }
 
