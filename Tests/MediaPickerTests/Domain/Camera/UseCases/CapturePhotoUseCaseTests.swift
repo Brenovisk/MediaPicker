@@ -13,16 +13,21 @@ struct CapturePhotoUseCaseTests {
     @Test func capturesPhotoThroughSessionContract() async throws {
         let controller = CameraSessionControllerSpy()
         let useCase = CapturePhotoUseCase(cameraSession: controller)
+        let framing = CameraPreviewFraming(aspectRatio: 16.0 / 9.0)
 
-        let media = try await useCase.execute(format: .png, rotationAngle: 90)
+        let media = try await useCase.execute(
+            format: .png,
+            rotationAngle: 90,
+            previewFraming: framing
+        )
 
         #expect(media.mediaType == .photo)
         #expect(media.source == .camera)
-        #expect(await controller.operations == [.capturePhoto(.png, 90)])
+        #expect(await controller.operations == [.capturePhoto(.png, 90, framing)])
     }
 
     @Test func propagatesCaptureFailure() async {
-        let controller = CameraSessionControllerSpy(failure: .capturePhoto(.jpeg, 0))
+        let controller = CameraSessionControllerSpy(failure: .capturePhoto(.jpeg, 0, nil))
         let useCase = CapturePhotoUseCase(cameraSession: controller)
 
         await #expect(throws: CameraSessionControllerSpyError.failure) {

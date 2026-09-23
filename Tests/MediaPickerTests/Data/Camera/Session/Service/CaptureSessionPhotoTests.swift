@@ -35,11 +35,17 @@ struct CaptureSessionPhotoTests {
         let service = CaptureSessionService(operations: client.operations)
         try await service.open(for: .back)
         try await service.setFlashMode(.auto)
+        let framing = CameraPreviewFraming(aspectRatio: 16.0 / 9.0)
 
-        _ = try await service.capturePhoto(format: .png, rotationAngle: 90)
+        _ = try await service.capturePhoto(
+            format: .png,
+            rotationAngle: 90,
+            previewFraming: framing
+        )
 
         #expect(client.capturedFlashModes == [.auto])
         #expect(client.capturedPhotoFormats == [.png])
+        #expect(client.photoCaptureOptions.first?.previewFraming == framing)
     }
 
     @Test func unsupportedOutputFlashModeFallsBackToOff() async throws {

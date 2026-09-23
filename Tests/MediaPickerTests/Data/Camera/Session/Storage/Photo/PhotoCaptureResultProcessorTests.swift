@@ -52,6 +52,139 @@ struct PhotoCaptureResultProcessorTests {
         #expect(typeIdentifier as String? == UTType.png.identifier)
     }
 
+    @Test func savedPhotoMatchesLandscapeLivePreviewAspectRatio() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let processor = makeProcessor(
+            requestID: 22,
+            directory: directory,
+            previewFraming: CameraPreviewFraming(aspectRatio: 16.0 / 9.0)
+        )
+
+        let media = try processor.process(
+            data: CapturedPhotoFixture.jpegData(width: 400, height: 300),
+            requestID: 22
+        )
+
+        #expect(try imageSize(at: media.contentURL) == CGSize(width: 400, height: 225))
+    }
+
+    @Test func matchingAspectRatioDoesNotReencodeJPEG() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let processor = makeProcessor(
+            requestID: 24,
+            directory: directory,
+            previewFraming: CameraPreviewFraming(aspectRatio: 4.0 / 3.0)
+        )
+        let original = try CapturedPhotoFixture.jpegData(width: 400, height: 300)
+
+        let media = try processor.process(data: original, requestID: 24)
+
+        #expect(try Data(contentsOf: media.contentURL) == original)
+    }
+
+    @Test func aspectFillCropIsCenteredLikeTheLivePreview() {
+        let crop = PhotoAspectRatioCropper.centeredCrop(
+            in: CGRect(x: 0, y: 0, width: 400, height: 300),
+            aspectRatio: 16.0 / 9.0
+        )
+
+        #expect(crop == CGRect(x: 0, y: 37, width: 400, height: 225))
+    }
+
+    @Test func normalizedViewportPreservesThePreviewCropPosition() throws {
+        let normalizedCrop = try #require(
+            CameraNormalizedRect(
+                originX: 0.25,
+                originY: 0,
+                width: 0.5,
+                height: 1
+            )
+        )
+        let framing = try #require(
+            CameraPreviewFraming(
+                aspectRatio: 2.0 / 3.0,
+                normalizedCrop: normalizedCrop
+            )
+        )
+
+        let crop = PhotoAspectRatioCropper.cropRect(
+            in: CGRect(x: 0, y: 0, width: 400, height: 300),
+            framing: framing
+        )
+
+        #expect(crop == CGRect(x: 100, y: 0, width: 200, height: 300))
+    }
+
+    @Test func incompatibleNormalizedViewportFallsBackToVisibleAspectRatio() throws {
+        let normalizedCrop = try #require(
+            CameraNormalizedRect(
+                originX: 0,
+                originY: 0,
+                width: 1,
+                height: 1
+            )
+        )
+        let framing = try #require(
+            CameraPreviewFraming(
+                aspectRatio: 16.0 / 9.0,
+                normalizedCrop: normalizedCrop
+            )
+        )
+
+        let crop = PhotoAspectRatioCropper.cropRect(
+            in: CGRect(x: 0, y: 0, width: 400, height: 300),
+            framing: framing
+        )
+
+        #expect(crop == CGRect(x: 0, y: 37, width: 400, height: 225))
+    }
+
+    @Test func savedPhotoCropsAfterApplyingCaptureOrientation() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let processor = makeProcessor(
+            requestID: 23,
+            directory: directory,
+            format: .png,
+            previewFraming: CameraPreviewFraming(aspectRatio: 9.0 / 16.0)
+        )
+
+        let media = try processor.process(
+            data: CapturedPhotoFixture.jpegData(
+                width: 400,
+                height: 300,
+                orientation: 6
+            ),
+            requestID: 23
+        )
+
+        #expect(try imageSize(at: media.contentURL) == CGSize(width: 225, height: 400))
+    }
+
+    @Test func pngConversionPreservesCaptureOrientationWithoutCropping() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let processor = makeProcessor(
+            requestID: 25,
+            directory: directory,
+            format: .png,
+            previewFraming: CameraPreviewFraming(aspectRatio: 3.0 / 4.0)
+        )
+
+        let media = try processor.process(
+            data: CapturedPhotoFixture.jpegData(
+                width: 400,
+                height: 300,
+                orientation: 6
+            ),
+            requestID: 25
+        )
+
+        #expect(try imageSize(at: media.contentURL) == CGSize(width: 300, height: 400))
+    }
+
     @Test func callbackForDifferentRequestIsRejected() throws {
         let directory = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -111,13 +244,22 @@ struct PhotoCaptureResultProcessorTests {
     private func makeProcessor(
         requestID: Int64,
         directory: URL,
-        format: PhotoOutputFormat = .jpeg
+        format: PhotoOutputFormat = .jpeg,
+        previewFraming: CameraPreviewFraming? = nil
     ) -> PhotoCaptureResultProcessor {
         PhotoCaptureResultProcessor(
             request: CameraPhotoCaptureRequest(id: requestID),
             format: format,
+            previewFraming: previewFraming,
             fileStore: TemporaryMediaFileStore(directoryURL: directory)
         )
+    }
+
+    private func imageSize(at url: URL) throws -> CGSize {
+        let data = try Data(contentsOf: url)
+        let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+        let image = try #require(CGImageSourceCreateImageAtIndex(source, .zero, nil))
+        return CGSize(width: image.width, height: image.height)
     }
 
     private func temporaryDirectory() -> URL {

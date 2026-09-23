@@ -12,7 +12,11 @@ import UniformTypeIdentifiers
 /** Validates camera image data and converts it to the selected output format. */
 struct PhotoDataEncoder: Sendable {
 
-    func encode(_ data: Data, as format: PhotoOutputFormat) throws -> EncodedPhoto {
+    func encode(
+        _ data: Data,
+        as format: PhotoOutputFormat,
+        previewFraming: CameraPreviewFraming? = nil
+    ) throws -> EncodedPhoto {
         guard data.isEmpty == false,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               CGImageSourceGetStatus(source) == .statusComplete,
@@ -20,13 +24,23 @@ struct PhotoDataEncoder: Sendable {
             throw MediaPickerError.photoCaptureFailed
         }
 
-        if UTType(typeIdentifier as String)?.conforms(to: format.contentType) == true {
+        let croppedImage: CGImage?
+        if let previewFraming {
+            croppedImage = try PhotoAspectRatioCropper().cropIfNeeded(
+                source,
+                using: previewFraming
+            )
+        } else {
+            croppedImage = nil
+        }
+
+        if croppedImage == nil,
+           UTType(typeIdentifier as String)?.conforms(to: format.contentType) == true {
             return EncodedPhoto(data: data, fileExtension: format.fileExtension)
         }
 
-        guard let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            throw MediaPickerError.photoCaptureFailed
-        }
+        let image = try croppedImage
+            ?? PhotoAspectRatioCropper().orientedImage(source)
 
         let outputData = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(

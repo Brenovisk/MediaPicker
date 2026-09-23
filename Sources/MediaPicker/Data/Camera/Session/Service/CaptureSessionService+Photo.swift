@@ -16,7 +16,8 @@ extension CaptureSessionService {
 
     func capturePhoto(
         format: PhotoOutputFormat,
-        rotationAngle: Double
+        rotationAngle: Double,
+        previewFraming: CameraPreviewFraming?
     ) async throws -> CapturedMedia {
         guard canCapturePhoto else {
             throw MediaPickerError.photoCaptureFailed
@@ -30,7 +31,8 @@ extension CaptureSessionService {
                     outputFormat: format,
                     flashMode: resolvedFlashMode,
                     rotationAngle: rotationAngle,
-                    isMirrored: configuredPosition == .front
+                    isMirrored: configuredPosition == .front,
+                    previewFraming: previewFraming
                 )
             )
             try stateMachine.handle(.photoCaptured)

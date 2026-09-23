@@ -8,6 +8,7 @@
 #if os(iOS)
 import AVFoundation
 import CoreImage
+import QuartzCore
 import UIKit
 
 @MainActor
@@ -46,12 +47,34 @@ final class CameraPreviewUIKitView: UIView {
         )
     }
 
+    var captureFraming: CameraPreviewFraming? {
+        guard bounds.width > .zero,
+              bounds.height > .zero,
+              let previewLayer else { return nil }
+
+        layoutIfNeeded()
+        updateVideoOrientation()
+
+        let visibleRect = previewLayer.metadataOutputRectConverted(
+            fromLayerRect: previewLayer.bounds
+        )
+        let normalizedCrop = Self.normalizedCrop(from: visibleRect)
+        return CameraPreviewFraming(
+            aspectRatio: Double(bounds.width / bounds.height),
+            normalizedCrop: normalizedCrop
+        )
+    }
+
     init(session: AVCaptureSession, frameStore: CameraPreviewFrameStore) {
         self.frameStore = frameStore
         super.init(frame: .zero)
         backgroundColor = .black
+        clipsToBounds = true
+        isOpaque = true
         previewLayer?.session = session
-        previewLayer?.videoGravity = .resizeAspect
+        previewLayer?.masksToBounds = true
+        // The saved photo is cropped to this same visible aspect ratio.
+        previewLayer?.videoGravity = .resizeAspectFill
     }
 
     @available(*, unavailable)
@@ -61,8 +84,10 @@ final class CameraPreviewUIKitView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        updateVideoOrientation()
-        applyMirroring()
+        withoutLayerAnimations {
+            updateVideoOrientation()
+            applyMirroring()
+        }
     }
 
     // MARK: Camera Position
@@ -101,7 +126,7 @@ final class CameraPreviewUIKitView: UIView {
 
         snapshot.frame = bounds
         snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        snapshot.contentMode = .scaleAspectFit
+        snapshot.contentMode = .scaleAspectFill
         snapshot.clipsToBounds = true
 
         addSubview(snapshot)
@@ -174,7 +199,9 @@ final class CameraPreviewUIKitView: UIView {
               connection.isVideoRotationAngleSupported(angle),
               connection.videoRotationAngle != angle else { return }
 
-        connection.videoRotationAngle = angle
+        withoutLayerAnimations {
+            connection.videoRotationAngle = angle
+        }
     }
 
     private var frozenFrameOrientation: UIImage.Orientation {
@@ -204,6 +231,28 @@ final class CameraPreviewUIKitView: UIView {
             ? normalizedAngle + 360
             : normalizedAngle
         return Int((positiveAngle / 90).rounded()) * 90 % 360
+    }
+
+    private static func normalizedCrop(from rect: CGRect) -> CameraNormalizedRect? {
+        let rect = rect.standardized
+        let minX = max(.zero, min(1, rect.minX))
+        let minY = max(.zero, min(1, rect.minY))
+        let maxX = max(minX, min(1, rect.maxX))
+        let maxY = max(minY, min(1, rect.maxY))
+
+        return CameraNormalizedRect(
+            originX: Double(minX),
+            originY: Double(minY),
+            width: Double(maxX - minX),
+            height: Double(maxY - minY)
+        )
+    }
+
+    private func withoutLayerAnimations(_ changes: () -> Void) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        changes()
+        CATransaction.commit()
     }
 
 }
