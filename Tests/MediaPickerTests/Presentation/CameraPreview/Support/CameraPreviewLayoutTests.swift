@@ -32,7 +32,6 @@ struct CameraPreviewLayoutTests {
         #expect(orientation == .landscapeLeft)
         #expect(orientation.controlsLayout == .vertical)
         #expect(orientation.controlRotationDegrees == 90)
-        #expect(orientation.cancelOnLeadingEdge)
     }
 
     @Test func landscapeRightPlacesVerticalControlsRotatedCounterclockwise() {
@@ -44,7 +43,61 @@ struct CameraPreviewLayoutTests {
         #expect(orientation == .landscapeRight)
         #expect(orientation.controlsLayout == .vertical)
         #expect(orientation.controlRotationDegrees == -90)
-        #expect(orientation.cancelOnLeadingEdge == false)
+    }
+
+    @Test func hiddenTopBarReservesNoSpaceInEitherOrientation() {
+        let layout = CameraPreviewLayout(orientation: .portrait, showsTopBar: false)
+
+        #expect(layout.reservedTopBarHeight == .zero)
+        #expect(layout.reservedTopBarWidth == .zero)
+    }
+
+    @Test func landscapeDirectionsUseTheSameControlFrames() {
+        let bounds = CGRect(x: 0, y: 0, width: 844, height: 390)
+        let leftFrames = CameraPreviewLayout(
+            orientation: .landscapeLeft
+        ).frames(in: bounds)
+        let rightFrames = CameraPreviewLayout(
+            orientation: .landscapeRight
+        ).frames(in: bounds)
+
+        #expect(leftFrames == rightFrames)
+        #expect(leftFrames.topBar.minX == bounds.minX)
+        #expect(leftFrames.controls.maxX == bounds.maxX)
+        #expect(leftFrames.topBar.maxX == leftFrames.preview.minX)
+        #expect(leftFrames.preview.maxX == leftFrames.controls.minX)
+    }
+
+    @Test func hiddenTopBarUsesAValidFrameWithoutReducingPreview() {
+        let bounds = CGRect(x: 0, y: 0, width: 844, height: 390)
+        let frames = CameraPreviewLayout(
+            orientation: .landscapeLeft,
+            showsTopBar: false
+        ).frames(in: bounds)
+
+        #expect(frames.topBar.width > .zero)
+        #expect(frames.topBar.height > .zero)
+        #expect(frames.topBar.minX > bounds.maxX)
+        #expect(frames.preview.minX == bounds.minX)
+        #expect(frames.preview.width > .zero)
+        #expect(frames.preview.maxX == frames.controls.minX)
+    }
+
+    @Test func hidingSelectorMovesShutterDownAndExpandsPreview() {
+        let withSelector = CameraPreviewLayout(
+            orientation: .portrait,
+            showsMediaSelector: true
+        )
+        let withoutSelector = CameraPreviewLayout(
+            orientation: .portrait,
+            showsMediaSelector: false
+        )
+
+        #expect(withoutSelector.reservedControlsHeight < withSelector.reservedControlsHeight)
+        #expect(
+            withSelector.reservedControlsHeight
+                - withoutSelector.reservedControlsHeight == 80
+        )
     }
 
 }

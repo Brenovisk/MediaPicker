@@ -17,6 +17,32 @@ import SwiftUI
 struct CameraPreviewLayout: Layout {
 
     let orientation: CameraPreviewOrientation
+    let showsTopBar: Bool
+    let showsMediaSelector: Bool
+
+    init(
+        orientation: CameraPreviewOrientation,
+        showsTopBar: Bool = true,
+        showsMediaSelector: Bool = true
+    ) {
+        self.orientation = orientation
+        self.showsTopBar = showsTopBar
+        self.showsMediaSelector = showsMediaSelector
+    }
+
+    var reservedTopBarHeight: CGFloat {
+        showsTopBar ? CameraPreviewConstants.Layout.portraitTopBarHeight : .zero
+    }
+
+    var reservedTopBarWidth: CGFloat {
+        showsTopBar ? CameraPreviewConstants.Layout.topBarRailWidth : .zero
+    }
+
+    var reservedControlsHeight: CGFloat {
+        showsMediaSelector
+            ? CameraPreviewConstants.Layout.portraitControlsHeightWithSelector
+            : CameraPreviewConstants.Layout.portraitControlsHeightWithoutSelector
+    }
 
     func sizeThatFits(
         proposal: ProposedViewSize,
@@ -34,96 +60,116 @@ struct CameraPreviewLayout: Layout {
     ) {
         guard subviews.count == SubviewIndex.allCases.count else { return }
 
+        let frames = frames(in: bounds)
+        place(subviews[SubviewIndex.topBar.rawValue], in: frames.topBar)
+        place(subviews[SubviewIndex.preview.rawValue], in: frames.preview)
+        place(subviews[SubviewIndex.controls.rawValue], in: frames.controls)
+    }
+
+    func frames(in bounds: CGRect) -> CameraPreviewLayoutFrames {
+        guard bounds.width > .zero, bounds.height > .zero else {
+            let parked = parkedFrame(outside: bounds)
+            return CameraPreviewLayoutFrames(
+                topBar: parked,
+                preview: parked,
+                controls: parked
+            )
+        }
+
         switch orientation {
         case .portrait:
-            placePortraitSubviews(in: bounds, subviews: subviews)
+            return portraitFrames(in: bounds)
         case .landscapeLeft, .landscapeRight:
-            placeLandscapeSubviews(
-                in: bounds,
-                cancelOnLeadingEdge: orientation.topBarOnLeadingEdge,
-                subviews: subviews
-            )
+            return landscapeFrames(in: bounds)
         }
     }
 
-    private func placePortraitSubviews(in bounds: CGRect, subviews: Subviews) {
-        let topBarHeight = CameraPreviewConstants.Layout.portraitTopBarHeight
-        let controlsHeight = CameraPreviewConstants.Layout.portraitControlsHeight
-        let previewHeight = max(.zero, bounds.height - topBarHeight - controlsHeight)
-
-        place(
-            subviews[SubviewIndex.topBar.rawValue],
-            in: CGRect(
+    private func portraitFrames(in bounds: CGRect) -> CameraPreviewLayoutFrames {
+        let lengths = fittedLengths(
+            first: reservedTopBarHeight,
+            second: reservedControlsHeight,
+            total: bounds.height
+        )
+        let topBar = showsTopBar
+            ? CGRect(
                 x: bounds.minX,
                 y: bounds.minY,
                 width: bounds.width,
-                height: topBarHeight
+                height: lengths.first
             )
-        )
-        place(
-            subviews[SubviewIndex.preview.rawValue],
-            in: CGRect(
+            : parkedFrame(outside: bounds)
+
+        return CameraPreviewLayoutFrames(
+            topBar: topBar,
+            preview: CGRect(
                 x: bounds.minX,
-                y: bounds.minY + topBarHeight,
+                y: bounds.minY + lengths.first,
                 width: bounds.width,
-                height: previewHeight
-            )
-        )
-        place(
-            subviews[SubviewIndex.controls.rawValue],
-            in: CGRect(
+                height: lengths.content
+            ),
+            controls: CGRect(
                 x: bounds.minX,
-                y: bounds.maxY - controlsHeight,
+                y: bounds.maxY - lengths.second,
                 width: bounds.width,
-                height: controlsHeight
+                height: lengths.second
             )
         )
     }
 
-    private func placeLandscapeSubviews(
-        in bounds: CGRect,
-        cancelOnLeadingEdge: Bool,
-        subviews: Subviews
-    ) {
-        let railWidth = min(
-            CameraPreviewConstants.Layout.landscapeControlsWidth,
-            bounds.width / 3
+    private func landscapeFrames(in bounds: CGRect) -> CameraPreviewLayoutFrames {
+        let lengths = fittedLengths(
+            first: reservedTopBarWidth,
+            second: CameraPreviewConstants.Layout.landscapeControlsWidth,
+            total: bounds.width
         )
-        let leadingSubview = cancelOnLeadingEdge
-            ? subviews[SubviewIndex.topBar.rawValue]
-            : subviews[SubviewIndex.controls.rawValue]
-
-        let trailingSubview = cancelOnLeadingEdge
-            ? subviews[SubviewIndex.controls.rawValue]
-            : subviews[SubviewIndex.topBar.rawValue]
-
-        place(
-            leadingSubview,
-            in: CGRect(
+        let topBar = showsTopBar
+            ? CGRect(
                 x: bounds.minX,
                 y: bounds.minY,
-                width: railWidth,
+                width: lengths.first,
                 height: bounds.height
             )
-        )
-        place(
-            subviews[SubviewIndex.preview.rawValue],
-            in: CGRect(
-                x: bounds.minX + railWidth,
+            : parkedFrame(outside: bounds)
+
+        return CameraPreviewLayoutFrames(
+            topBar: topBar,
+            preview: CGRect(
+                x: bounds.minX + lengths.first,
                 y: bounds.minY,
-                width: max(.zero, bounds.width - (railWidth * 2)),
+                width: lengths.content,
                 height: bounds.height
-            )
-        )
-        place(
-            trailingSubview,
-            in: CGRect(
-                x: bounds.maxX - railWidth,
+            ),
+            controls: CGRect(
+                x: bounds.maxX - lengths.second,
                 y: bounds.minY,
-                width: railWidth,
+                width: lengths.second,
                 height: bounds.height
             )
         )
+    }
+
+    private func fittedLengths(
+        first: CGFloat,
+        second: CGFloat,
+        total: CGFloat
+    ) -> FittedLayoutLengths {
+        let minimumContent = min(1, total)
+        let available = max(.zero, total - minimumContent)
+        let requested = first + second
+        let scale = requested > available && requested > .zero
+            ? available / requested
+            : 1
+        let fittedFirst = first * scale
+        let fittedSecond = second * scale
+        return FittedLayoutLengths(
+            first: fittedFirst,
+            content: max(minimumContent, total - fittedFirst - fittedSecond),
+            second: fittedSecond
+        )
+    }
+
+    private func parkedFrame(outside bounds: CGRect) -> CGRect {
+        CGRect(x: bounds.maxX + 1, y: bounds.maxY + 1, width: 1, height: 1)
     }
 
     private func place(_ subview: LayoutSubview, in frame: CGRect) {
@@ -151,27 +197,24 @@ enum CameraPreviewOrientation: Equatable {
         self = landscapeSide == .left ? .landscapeLeft : .landscapeRight
     }
 
-    var controlsLayout: CameraPreviewControls.Layout {
-        self == .portrait ? .horizontal : .vertical
-    }
-
-    var controlRotationDegrees: Double {
+    func valueTo<T>(portrait: T, landscapeLeft: T, landscapeRight: T) -> T {
         switch self {
-        case .portrait:
-            .zero
         case .landscapeLeft:
-            90
+            return landscapeLeft
         case .landscapeRight:
-            -90
+            return landscapeRight
+        case .portrait:
+            return portrait
         }
     }
 
-    var topBarPlacement: CameraPreviewTopBar.Placement {
-        self == .portrait ? .top : .side
-    }
-
-    var topBarOnLeadingEdge: Bool {
-        self == .landscapeLeft
+    func valueTo<T>(portrait: T, landscape: T) -> T {
+        switch self {
+        case .landscapeLeft, .landscapeRight:
+            return landscape
+        case .portrait:
+            return portrait
+        }
     }
 
 }
@@ -187,5 +230,21 @@ private enum SubviewIndex: Int, CaseIterable {
     case topBar
     case preview
     case controls
+}
+
+struct CameraPreviewLayoutFrames: Equatable {
+
+    let topBar: CGRect
+    let preview: CGRect
+    let controls: CGRect
+
+}
+
+private struct FittedLayoutLengths {
+
+    let first: CGFloat
+    let content: CGFloat
+    let second: CGFloat
+
 }
 #endif

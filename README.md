@@ -6,9 +6,10 @@ MediaPicker is a SwiftUI-first package for capturing photos and videos with the
 camera or selecting them from the photo library through one consistent API.
 
 > [!IMPORTANT]
-> MediaPicker is in early development. The package foundation is available, but
-> the camera, photo-library, and unified picker APIs described below are not yet
-> implemented. Public API and behavior may change before `1.0.0`. Follow the
+> MediaPicker is in early development. Camera photo capture and single-photo
+> selection from the library are available on iOS; video recording and the
+> unified picker API are not yet implemented. Public API and behavior may change
+> before `1.0.0`. Follow the
 > [v0.0.1 roadmap](Docs/Roadmapv0.0.1.md) for progress.
 
 ## Goals for v0.0.1
@@ -59,15 +60,34 @@ Then add `MediaPicker` to the dependencies of your target:
 
 ## Current API
 
-The current public API is a small package-integration scaffold:
+The iOS camera view returns either a captured or library-selected photo through
+the same `CapturedMedia` callback. Prepare camera access before presenting it:
 
 ```swift
 import MediaPicker
+import SwiftUI
 
-let message = MediaPicker().hello()
+CameraPreview(
+    controlOptions: CameraPreviewControlOptions(
+        mediaTypes: .photo,
+        foregroundColor: .white,
+        backgroundColor: .black,
+        showsFlash: true,
+        showsSwitchCamera: true,
+        showsGallery: true,
+        showsReview: true
+    ),
+    onCapture: { media in
+        // Copy media.contentURL if the file must survive temporary cleanup.
+    },
+    onCancel: {}
+)
 ```
 
-This placeholder will be replaced as the domain and picker APIs are implemented.
+Gallery selection uses the system photo picker and does not require full library
+access. Setting `showsReview` to `false` delivers the result immediately. The
+Photo/Video selector appears when both types are configured; video recording
+is not available yet, so its shutter remains disabled.
 
 ## Planned API
 

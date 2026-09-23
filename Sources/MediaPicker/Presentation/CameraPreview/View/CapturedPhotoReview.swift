@@ -65,6 +65,7 @@ struct CapturedPhotoReview: View {
                             CameraPreviewConstants.Layout.reviewBackgroundImageOpacity
                         )
                     }
+                    .ignoresSafeArea()
             }
         }
         .clipped()
@@ -76,9 +77,15 @@ struct CapturedPhotoReview: View {
         let layout = controlsLayout(isLandscape: isLandscape)
 
         return layout {
-            retakeButton
-            Spacer(minLength: .zero)
-            confirmButton
+            if isLandscape {
+                confirmButton
+                Spacer(minLength: .zero)
+                retakeButton
+            } else {
+                retakeButton
+                Spacer(minLength: .zero)
+                confirmButton
+            }
         }
         .frame(
             maxWidth: isLandscape ? nil : .infinity,

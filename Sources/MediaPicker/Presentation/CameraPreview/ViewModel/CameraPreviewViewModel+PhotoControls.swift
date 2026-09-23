@@ -29,6 +29,12 @@ extension CameraPreviewViewModel {
         isCapturingPhoto == false && isSwitchingCamera == false
     }
 
+    var canSelectLibraryPhoto: Bool {
+        isCapturingPhoto == false
+            && isSwitchingCamera == false
+            && isReviewingPhoto == false
+    }
+
     var isReviewingPhoto: Bool {
         capturedMedia != nil
     }
@@ -48,7 +54,10 @@ extension CameraPreviewViewModel {
         }
     }
 
-    func capturePhoto() async throws -> CapturedMedia {
+    func capturePhoto(
+        previewFraming: CameraPreviewFraming? = nil,
+        rotationAngle: Double? = nil
+    ) async throws -> CapturedMedia {
         guard canCapturePhoto else {
             throw MediaPickerError.photoCaptureFailed
         }
@@ -60,10 +69,20 @@ extension CameraPreviewViewModel {
 
         let media = try await capturePhotoUseCase.execute(
             format: photoOutputFormat,
-            rotationAngle: previewSurface.rotationAngles.capture
+            rotationAngle: rotationAngle ?? previewSurface.rotationAngles.capture,
+            previewFraming: previewFraming ?? previewSurface.captureFraming
         )
-        capturedPhotoPreview = nil
-        capturedMedia = media
+        presentForReviewIfNeeded(media)
+        return media
+    }
+
+    func selectLibraryPhoto(_ data: Data) throws -> CapturedMedia {
+        guard canSelectLibraryPhoto else {
+            throw MediaPickerError.photoLibraryLoadingFailed
+        }
+
+        let media = try importPhotoFromLibraryUseCase.execute(data)
+        presentForReviewIfNeeded(media)
         return media
     }
 
@@ -112,6 +131,12 @@ extension CameraPreviewViewModel {
         discardCapturedMediaUseCase.execute(media: capturedMedia)
         self.capturedMedia = nil
         capturedPhotoPreview = nil
+    }
+
+    private func presentForReviewIfNeeded(_ media: CapturedMedia) {
+        guard showsReview else { return }
+        capturedPhotoPreview = nil
+        capturedMedia = media
     }
 
     private var controlsAreReady: Bool {

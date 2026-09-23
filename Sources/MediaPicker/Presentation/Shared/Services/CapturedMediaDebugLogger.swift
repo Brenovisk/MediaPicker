@@ -17,7 +17,14 @@ enum CapturedMediaDebugLogger {
         ).fileSize
         let fileSizeInMegabytes = Double(fileSize ?? 0) / bytesPerMegabyte
 
-        debugPrint("Captured photo confirmed")
+        switch media.source {
+        case .camera:
+            debugPrint("Captured photo confirmed")
+        case .photoLibrary:
+            debugPrint("Library photo selected")
+        default:
+            debugPrint("Media selected")
+        }
         debugPrint("ID: \(media.id)")
         debugPrint("Media type: \(media.mediaType)")
         debugPrint("Source: \(media.source)")
