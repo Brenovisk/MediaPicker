@@ -1,8 +1,8 @@
 # Create Pull Request
 
-Runs SwiftLint, validates the package, synchronizes the current branch,
-generates a Pull Request title and description with an AI provider, and creates
-the Pull Request through the GitHub CLI.
+Validates OpenSpec, runs SwiftLint, validates the package, synchronizes the
+current branch, generates a Pull Request title and description with an AI
+provider, and creates the Pull Request through the GitHub CLI.
 
 The generated description follows `.github/PULL_REQUEST_TEMPLATE.md` and is
 shown for review before the Pull Request is created.
@@ -13,6 +13,7 @@ shown for review before the Pull Request is created.
 - Swift
 - Git
 - GitHub CLI (`gh`), authenticated with access to the repository
+- OpenSpec at the version pinned in `.openspec-version`
 - An `origin` remote
 - One installed and authenticated AI CLI:
   - Claude Code (`claude`)
@@ -102,8 +103,10 @@ Release Pull Requests from `develop` to `master` and Pull Requests created with
 
 ## What the script does
 
-1. Runs the pinned SwiftLint configuration before any Pull Request preparation.
-2. Runs `swift test` and stops if linting, compilation, or any test fails.
+1. Runs the pinned OpenSpec and SwiftLint validations before any Pull Request
+   preparation.
+2. Runs `swift test` and stops if specification validation, linting,
+   compilation, or any test fails.
 3. Validates Git, GitHub CLI authentication, and the selected AI CLI.
 4. Resolves the current branch, base branch, and optional related issue number.
 5. Validates the issue for branches targeting `develop`, unless `--no-issue`
@@ -125,6 +128,8 @@ Release Pull Requests from `develop` to `master` and Pull Requests created with
 - The title uses Conventional Commits style when appropriate and is limited to
   72 characters.
 - The description preserves the repository Pull Request template.
+- The OpenSpec section references applicable changed proposal paths, or explains
+  why no proposal applies.
 - Checklist items remain unchecked for the author or reviewer to verify.
 - The AI receives Git content as reference data and is instructed not to invent
   behavior, test results, or implementation details.
