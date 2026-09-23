@@ -23,6 +23,12 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
+      - name: Install OpenSpec
+        run: npm install --global "@fission-ai/openspec@$(tr -d '[:space:]' < .openspec-version)"
+
+      - name: Validate OpenSpec
+        run: ./.scripts/validate-openspec.sh
+
       - name: Install SwiftLint
         env:
           SWIFTLINT_ARCHIVE_SHA256: c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0

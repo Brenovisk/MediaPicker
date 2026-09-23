@@ -1,9 +1,9 @@
 # Create Commit
 
-Runs SwiftLint, then creates one or more focused Git commits from the changes
-currently staged in the repository. An AI provider analyzes the staged diff,
-proposes a commit plan, and generates messages that follow the project's
-issue-based convention.
+Validates OpenSpec, runs SwiftLint, then creates one or more focused Git commits
+from the changes currently staged in the repository. An AI provider analyzes
+the staged diff, proposes a commit plan, and generates messages that follow the
+project's issue-based convention.
 
 The script always shows the complete plan and asks for confirmation before it
 creates any commit.
@@ -13,6 +13,7 @@ creates any commit.
 - Bash
 - Git
 - `jq`
+- OpenSpec at the version pinned in `.openspec-version`
 - One installed and authenticated AI CLI:
   - Claude Code (`claude`)
   - Codex (`codex`)
@@ -108,8 +109,8 @@ Supported types are `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`,
 
 ## What the script does
 
-1. Validates Git, `jq`, and the repository, then runs the pinned SwiftLint
-   configuration and stops if linting fails.
+1. Validates Git, `jq`, and the repository, then runs the pinned OpenSpec and
+   SwiftLint checks and stops if either fails.
 2. Validates the selected AI CLI and resolves the optional issue number from
    the branch or prompt.
 3. Reads only the staged files and staged diff.

@@ -34,6 +34,12 @@ None
 
 Closes #
 
+## OpenSpec
+
+<!-- Reference openspec/changes/<change-name>/, or explain why it is not applicable. -->
+
+Not applicable —
+
 ## Definition of Done
 
 - [ ] The code builds without new warnings on supported targets.
@@ -45,4 +51,5 @@ Closes #
 - [ ] Visible changes are demonstrated in the Example App when applicable.
 - [ ] Affected documentation is updated.
 - [ ] This pull request references the corresponding issue.
+- [ ] The applicable OpenSpec proposal is referenced and validates successfully, or the exemption is explained.
 - [ ] No unnecessary external or consumer dependency was introduced.

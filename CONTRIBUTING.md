@@ -27,6 +27,48 @@ chore/42-update-ci
 Open pull requests into `develop`. Keep branches limited to one issue and avoid
 mixing unrelated refactors with a functional change.
 
+## Spec-driven development with OpenSpec
+
+OpenSpec is the planning framework for new features and significant behavior
+changes. Its CLI is a development-only tool and must not be added to
+`Package.swift`. The required version is stored in `.openspec-version`. Install
+Node.js 20.19 or newer, install that exact version, and verify the repository
+setup with:
+
+```sh
+npm install --global @fission-ai/openspec@1.13.1
+openspec --version
+./.scripts/validate-openspec.sh
+```
+
+Create an OpenSpec proposal before production code changes when work introduces
+a feature, changes public API or observable behavior, alters architecture or
+concurrency, or significantly changes permissions, media processing, storage,
+or lifecycle behavior. A proposal is not required for typos, formatting,
+dependency-free documentation, test-only maintenance, or a small localized fix
+whose expected behavior and implementation are already unambiguous. If such a
+fix expands into a significant behavior or design change, stop and create a
+proposal.
+
+Use this workflow:
+
+1. Create the change and its proposal, requirements, design decisions,
+   acceptance scenarios, and implementation tasks with
+   `$openspec-propose <description>`.
+2. Review the generated artifacts under `openspec/changes/<change-name>/` and
+   run `./.scripts/validate-openspec.sh` before changing production code.
+3. Implement the approved tasks with `$openspec-apply-change <change-name>`,
+   keeping task checkboxes current as work is verified.
+4. Run OpenSpec validation, lint, build, tests, and applicable manual checks.
+5. After the implementation and acceptance criteria are complete, archive it
+   with `$openspec-archive-change <change-name>` and validate again.
+
+Commit `openspec/` and the generated tool workflows under `.agents/`; they are
+shared project inputs. Personal OpenSpec configuration and worksets are stored
+outside the repository and must not be committed. Pull requests must reference
+the related `openspec/changes/<change-name>/` path when a proposal applies, or
+state why OpenSpec is not applicable.
+
 ## Code style and naming
 
 - Follow SOLID and Clean Code principles: keep types and functions focused on a
@@ -108,6 +150,7 @@ or execution order.
 Before opening a pull request, run:
 
 ```sh
+./.scripts/validate-openspec.sh
 ./.scripts/lint.sh
 swift build
 swift test
@@ -126,10 +169,11 @@ Install the repository's version-controlled Git hooks once after cloning:
 ./.githooks/install-git-hooks.sh
 ```
 
-The `pre-push` hook runs `./.scripts/lint.sh` followed by `swift test` before
-Git sends commits to the remote. A lint, build, or test failure cancels the push
-so problems are caught before CI. The hook uses the same pinned SwiftLint
-version and configuration as `create-commit`, `create-pr`, and GitHub Actions.
+The `pre-push` hook runs OpenSpec validation, `./.scripts/lint.sh`, and
+`swift test` before Git sends commits to the remote. A specification, lint,
+build, or test failure cancels the push so problems are caught before CI. The
+hook uses the same pinned OpenSpec and SwiftLint versions and configuration as
+`create-commit`, `create-pr`, and GitHub Actions.
 
 Keep the hooks installed and do not edit the installed copy directly; update
 the version-controlled files under `.githooks` instead. `git push --no-verify`
@@ -156,12 +200,12 @@ create-commit
 
 The provider can also be selected directly with `create-commit codex`,
 `create-commit claude`, or `create-commit gemini`. The command reads only the
-staged diff, but first runs the pinned SwiftLint configuration against the
-repository. It then proposes one or more focused commits, validates every file
-assignment, generates the required `type(issue): emoji description` messages,
-and asks for confirmation before committing. Feature-branch names must include
-the issue number, such as `fix/42-handle-denied-permission`, so the command can
-derive the commit scope.
+staged diff, but first validates OpenSpec and runs the pinned SwiftLint
+configuration against the repository. It then proposes one or more focused
+commits, validates every file assignment, generates the required
+`type(issue): emoji description` messages, and asks for confirmation before
+committing. Feature-branch names must include the issue number, such as
+`fix/42-handle-denied-permission`, so the command can derive the commit scope.
 
 For a change that intentionally has no corresponding issue, run
 `create-commit --no-issue` (or, for example,
@@ -187,8 +231,9 @@ after all intended commits are ready. The command runs the package tests,
 selects the correct base branch, validates the issue number from the branch,
 pushes the branch, loads the repository pull-request template, generates a
 consistent title and description, inserts the related issue, and shows the
-complete proposal for confirmation before creating the pull request. SwiftLint
-runs before the package tests, so either validation can stop the operation.
+complete proposal for confirmation before creating the pull request. OpenSpec
+and SwiftLint run before the package tests, so any validation can stop the
+operation.
 
 When a pull request intentionally has no corresponding issue, use
 `create-pr --no-issue` (or, for example, `create-pr codex --no-issue`). This
@@ -209,4 +254,4 @@ relevant automated tests and all existing tests pass, public APIs are coherent
 and documented, errors and cancellation are handled, no required work is hidden
 in `TODO` or `FIXME` comments, visible behavior is demonstrated in the Example
 App, affected documentation is updated, and the pull request references its
-issue.
+issue and applicable OpenSpec proposal.

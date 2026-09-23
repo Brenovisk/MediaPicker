@@ -1,0 +1,95 @@
+# Author: Breno Souza
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  Product:
+  MediaPicker is a reusable Swift package for camera capture and photo-library
+  selection. Its scope includes photos and videos, permissions, configurable
+  controls, capture review, and temporary media storage. Distinguish existing
+  capabilities from planned features by checking the code and current specs.
+
+  Stack:
+  Swift 6, SwiftUI, UIKit interoperability, AVFoundation, PhotoKit, Swift Package
+  Manager, Swift Testing, and SwiftLint. Preserve declared deployment targets
+  and platform availability for iOS and macOS.
+
+  Architecture:
+  Clean Architecture: Presentation -> Domain <- Data.
+  Domain owns business models, use cases, errors, and dependency contracts.
+  Data owns framework integrations and contract implementations.
+  Presentation uses MVVM; ViewModels invoke use cases.
+  Keep UI and infrastructure frameworks outside Domain. Inject dependencies.
+
+  Standards:
+  Apply SOLID and Clean Code with cohesive types and minimal abstractions.
+  Maximum lines: 450 per Swift file, 500 per other file, 300 per ViewModel.
+  Prefer Views under 250 lines and functions under 30 lines.
+  SwiftUI nesting must not exceed 5 levels; never mutate state inside body.
+  Attribute manually created files to Breno Souza; exclude generated/vendor files.
+  Comments explain contracts or non-obvious decisions, not obvious code.
+
+  Safety and quality:
+  No production force unwraps, forced casts, or try!.
+  Enforce Swift 6 isolation and Sendable safety; keep expensive work off MainActor.
+  Handle cancellation, retain cycles, resource cleanup, and exactly-once completion.
+  Preserve accessibility, localization, privacy, and public API compatibility.
+  Test behavior using AAA and FIRST with isolated dependencies.
+  Test names: test_<action>_<scenario>_<expectedResult>().
+  Use project commit/PR scripts; keep development tools out of consumer dependencies.
+
+  Media invariants:
+  Live preview, review, and saved output must preserve the intended framing,
+  orientation, and mirroring. Device rotation must not distort media or cause
+  control overlap. Camera operations must remain responsive and state-safe.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - "Follow the schema template; keep the proposal under 500 words."
+    - "Explain the problem, intended outcome, scope, and explicit non-goals."
+    - "Identify affected capabilities and public API, platform, or permission impacts."
+    - "Separate current behavior from proposed behavior; avoid unrelated improvements."
+
+  specs:
+    - "Define observable SHALL requirements with testable WHEN/THEN scenarios."
+    - "Cover relevant success, failure, cancellation, repeated-action, and lifecycle paths."
+    - "Specify platform availability, accessibility, and orientation behavior when affected."
+    - "For media changes, specify preview/review/output consistency and format expectations."
+
+  design:
+    - "Map responsibilities to layers and explain contracts and dependency injection."
+    - "Address state transitions, isolation, cancellation, errors, and resource ownership."
+    - "For UI/media changes, address stable layout, memory use, and measurable performance."
+    - "Document meaningful alternatives, compatibility decisions, and justified exceptions."
+    - "Prefer existing patterns; avoid fragmentation solely to satisfy file-size limits."
+
+  tasks:
+    - "Use checkboxes and dependency-ordered, verifiable tasks scoped to roughly 2 hours."
+    - "Pair each behavioral change with tests; bug fixes require a regression test."
+    - "Use AAA/FIRST and behavior-based assertions; avoid sleeps and external dependencies."
+    - "Include documentation updates and concrete validation for acceptance criteria."
+    - "Explain test omissions for documentation or formatting-only changes."
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above. Example:
+operations:
+  apply:
+    guidance:
+      - "Read the change artifacts, engineering guideline, and affected code first."
+      - "Preserve unrelated changes and implement only the approved scope."
+      - "Keep tasks current; mark completion only after implementation and verification."
+      - "Check lint, affected platform builds, and relevant tests using project tooling."
+      - "For UI/media changes, verify orientations, accessibility, and capture consistency."
+      - "Report changed behavior, validation evidence, and checks that could not run."
+
+  archive:
+    guidance:
+      - "Reconcile artifacts with delivered behavior and confirm acceptance criteria."
+      - "Verify validation evidence is current; disclose unresolved failures or omissions."
+      - "Synchronize applicable delta specs and follow the archive workflow."
+      - "Summarize the archived change, compatibility notes, and remaining follow-ups."

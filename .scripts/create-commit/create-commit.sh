@@ -191,9 +191,21 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 
 REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
 LINT_SCRIPT="$REPOSITORY_ROOT/.scripts/lint.sh"
+OPENSPEC_SCRIPT="$REPOSITORY_ROOT/.scripts/validate-openspec.sh"
 
 [[ -x "$LINT_SCRIPT" ]] ||
   error "$LINT_SCRIPT was not found or is not executable."
+
+[[ -x "$OPENSPEC_SCRIPT" ]] ||
+  error "$OPENSPEC_SCRIPT was not found or is not executable."
+
+info "Validating OpenSpec..."
+
+if ! "$OPENSPEC_SCRIPT"; then
+  error "OpenSpec validation failed. Commit creation was stopped."
+fi
+
+success "OpenSpec validation passed."
 
 info "Running SwiftLint..."
 

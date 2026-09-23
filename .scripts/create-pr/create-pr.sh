@@ -93,9 +93,21 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 
 REPOSITORY_ROOT=$(git rev-parse --show-toplevel)
 LINT_SCRIPT="$REPOSITORY_ROOT/.scripts/lint.sh"
+OPENSPEC_SCRIPT="$REPOSITORY_ROOT/.scripts/validate-openspec.sh"
 
 [[ -x "$LINT_SCRIPT" ]] ||
   error "$LINT_SCRIPT was not found or is not executable."
+
+[[ -x "$OPENSPEC_SCRIPT" ]] ||
+  error "$OPENSPEC_SCRIPT was not found or is not executable."
+
+info "Validating OpenSpec..."
+
+if ! "$OPENSPEC_SCRIPT"; then
+  error "OpenSpec validation failed. Pull Request creation was stopped."
+fi
+
+success "OpenSpec validation passed."
 
 info "Running SwiftLint..."
 
@@ -467,7 +479,11 @@ Do not state that they passed unless execution evidence is provided.
    - mention dependency or package configuration changes when relevant
    - mention platform compatibility changes when relevant
 
-20. The final output MUST follow exactly this structure:
+20. In the OpenSpec section, reference each applicable changed path under
+openspec/changes/. If the diff contains no applicable proposal, retain a concise
+"Not applicable" explanation. Never invent a proposal path.
+
+21. The final output MUST follow exactly this structure:
 
 ---TITLE---
 <title>

@@ -7,4 +7,4 @@ cd "$repository_root"
 
 git config --local core.hooksPath .githooks
 
-echo "Git hooks enabled from .githooks. Tests will run before every push."
+echo "Git hooks enabled. OpenSpec, lint, and tests will run before every push."
