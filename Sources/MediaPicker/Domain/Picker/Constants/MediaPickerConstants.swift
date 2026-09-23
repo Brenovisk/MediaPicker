@@ -6,6 +6,12 @@ enum MediaPickerConstants {
         case greeting
         case capturePhoto
         case closeCamera
+        case gallery
+        case galleryImportFailed
+        case dismiss
+        case photo
+        case video
+        case videoUnavailable
         case flashAuto
         case flashOff
         case flashOn
@@ -74,6 +80,18 @@ extension MediaPickerConstants.Text {
             return "Take photo"
         case .closeCamera:
             return "Close camera"
+        case .gallery:
+            return "Choose photo from library"
+        case .galleryImportFailed:
+            return "The selected photo could not be loaded."
+        case .dismiss:
+            return "OK"
+        case .photo:
+            return "PHOTO"
+        case .video:
+            return "VIDEO"
+        case .videoUnavailable:
+            return "Video recording is not available yet"
         case .flashAuto:
             return "Flash automatic"
         case .flashOff:

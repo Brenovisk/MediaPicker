@@ -27,7 +27,8 @@ extension CaptureSessionStorage {
             let delegate = PhotoCaptureCompletionDelegate(
                 processor: PhotoCaptureResultProcessor(
                     request: request,
-                    format: options.outputFormat
+                    format: options.outputFormat,
+                    previewFraming: options.previewFraming
                 ),
                 continuation: continuation,
                 onCompletion: { [photoCaptureDelegates] in

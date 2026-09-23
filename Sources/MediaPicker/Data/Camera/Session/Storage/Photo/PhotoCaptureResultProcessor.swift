@@ -12,17 +12,20 @@ struct PhotoCaptureResultProcessor: Sendable {
 
     private let request: CameraPhotoCaptureRequest
     private let format: PhotoOutputFormat
+    private let previewFraming: CameraPreviewFraming?
     private let encoder: PhotoDataEncoder
     private let fileStore: TemporaryMediaFileStore
 
     init(
         request: CameraPhotoCaptureRequest,
         format: PhotoOutputFormat,
+        previewFraming: CameraPreviewFraming? = nil,
         encoder: PhotoDataEncoder = PhotoDataEncoder(),
         fileStore: TemporaryMediaFileStore = TemporaryMediaFileStore()
     ) {
         self.request = request
         self.format = format
+        self.previewFraming = previewFraming
         self.encoder = encoder
         self.fileStore = fileStore
     }
@@ -33,7 +36,11 @@ struct PhotoCaptureResultProcessor: Sendable {
         }
 
         do {
-            let photo = try encoder.encode(data, as: format)
+            let photo = try encoder.encode(
+                data,
+                as: format,
+                previewFraming: previewFraming
+            )
             let fileURL = try fileStore.save(
                 photo.data,
                 fileName: String(request.id),

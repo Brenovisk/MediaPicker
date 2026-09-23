@@ -37,6 +37,10 @@ struct CameraPreviewConstantsTests {
 
     @Test func everyControlMeetsTheMinimumTapTarget() {
         #expect(
+            CameraPreviewConstants.Layout.topControlSize
+                >= CameraPreviewConstants.Layout.minimumTapTarget
+        )
+        #expect(
             CameraPreviewConstants.Layout.controlSize
                 >= CameraPreviewConstants.Layout.minimumTapTarget
         )

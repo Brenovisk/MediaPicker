@@ -36,7 +36,8 @@ protocol CameraSessionControlling: Sendable {
 
     func capturePhoto(
         format: PhotoOutputFormat,
-        rotationAngle: Double
+        rotationAngle: Double,
+        previewFraming: CameraPreviewFraming?
     ) async throws -> CapturedMedia
 
     func setFlashMode(_ mode: CameraFlashMode) async throws
@@ -46,6 +47,17 @@ protocol CameraSessionControlling: Sendable {
 }
 
 extension CameraSessionControlling {
+
+    func capturePhoto(
+        format: PhotoOutputFormat,
+        rotationAngle: Double
+    ) async throws -> CapturedMedia {
+        try await capturePhoto(
+            format: format,
+            rotationAngle: rotationAngle,
+            previewFraming: nil
+        )
+    }
 
     func snapshot() async -> CameraSessionSnapshot {
         await CameraSessionSnapshot(

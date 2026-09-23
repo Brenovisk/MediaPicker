@@ -18,7 +18,7 @@ enum CameraSessionControllerOperation: Equatable {
     case enteredBackground
     case enteredForeground
     case switchCamera
-    case capturePhoto(PhotoOutputFormat, Double)
+    case capturePhoto(PhotoOutputFormat, Double, CameraPreviewFraming?)
     case setFlashMode(CameraFlashMode)
     case setTorchMode(CameraTorchMode)
 }
@@ -94,9 +94,10 @@ actor CameraSessionControllerSpy: CameraSessionControlling {
 
     func capturePhoto(
         format: PhotoOutputFormat,
-        rotationAngle: Double
+        rotationAngle: Double,
+        previewFraming: CameraPreviewFraming?
     ) throws -> CapturedMedia {
-        try record(.capturePhoto(format, rotationAngle))
+        try record(.capturePhoto(format, rotationAngle, previewFraming))
         defer { nextPhotoID = UUID() }
         return CapturedMedia(
             id: nextPhotoID,

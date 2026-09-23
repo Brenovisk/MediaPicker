@@ -8,91 +8,73 @@
 #if os(iOS)
 import SwiftUI
 
-/** Places preparation feedback and cancellation above the preview. */
+/** Keeps flash and camera switching in a compact, accessible control area. */
 struct CameraPreviewTopBar: View {
 
-    enum Placement {
-        case top
-        case side
-    }
-
-    let placement: Placement
-    let canClose: Bool
+    let orientation: CameraPreviewOrientation
+    let options: CameraPreviewControlOptions
+    let flashMode: CameraFlashMode
+    let flashAccessibilityLabel: String
+    let canChangeFlashMode: Bool
+    let canSwitchCamera: Bool
     let showsPreparationIndicator: Bool
-    let rotationDegrees: Double
-    let onClose: () -> Void
-
-    init(
-        placement: Placement = .top,
-        canClose: Bool,
-        showsPreparationIndicator: Bool,
-        rotationDegrees: Double = .zero,
-        onClose: @escaping () -> Void
-    ) {
-        self.placement = placement
-        self.canClose = canClose
-        self.showsPreparationIndicator = showsPreparationIndicator
-        self.rotationDegrees = rotationDegrees
-        self.onClose = onClose
-    }
+    let onFlash: () -> Void
+    let onSwitchCamera: () -> Void
 
     var body: some View {
-        ZStack {
-            preparationIndicator
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: preparationAlignment
-                )
-
-            closeButton
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: closeAlignment
-                )
+        Group {
+            if orientation == .portrait {
+                HStack(spacing: 12) { content }
+            } else {
+                VStack(spacing: 12) { content }
+            }
         }
-        .padding(
-            placement == .top ? .horizontal : .vertical,
-            CameraPreviewConstants.Layout.horizontalPadding
-        )
-        .padding(
-            placement == .top ? .vertical : .horizontal,
-            CameraPreviewConstants.Layout.verticalPadding
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(options.backgroundColor.opacity(0.32))
+        .background(.ultraThinMaterial)
     }
 
     @ViewBuilder
-    private var preparationIndicator: some View {
+    private var content: some View {
+        if options.showsFlash {
+            Button(action: onFlash) {
+                CameraControlIcon(
+                    systemName: CameraPreviewConstants.Icon.flash(flashMode).systemName
+                )
+                    .topCameraControlLabel(
+                        foregroundColor: flashMode == .off
+                            ? options.foregroundColor
+                            : .yellow
+                    )
+            }
+            .animatedButton()
+            .disabled(canChangeFlashMode == false)
+            .accessibilityLabel(flashAccessibilityLabel)
+        }
+
+        if options.showsSwitchCamera {
+            Button(action: onSwitchCamera) {
+                CameraControlIcon(
+                    systemName: CameraPreviewConstants.Icon.switchCamera.systemName
+                )
+                    .topCameraControlLabel(
+                        foregroundColor: options.foregroundColor
+                    )
+            }
+            .animatedButton()
+            .disabled(canSwitchCamera == false)
+            .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)
+        }
+
         if showsPreparationIndicator {
             ProgressView()
-                .tint(.white)
+                .tint(options.foregroundColor)
                 .frame(
-                    width: CameraPreviewConstants.Layout.minimumTapTarget,
-                    height: CameraPreviewConstants.Layout.minimumTapTarget
+                    width: CameraPreviewConstants.Layout.topControlSize,
+                    height: CameraPreviewConstants.Layout.topControlSize
                 )
-                .rotationEffect(.degrees(rotationDegrees))
                 .accessibilityLabel(MediaPickerConstants.Text.preparingCamera.value)
         }
-    }
-
-    private var closeButton: some View {
-        Button(action: onClose) {
-            CameraPreviewConstants.Icon.close.image
-                .circularLabelButton()
-        }
-        .animatedButton()
-        .disabled(canClose == false)
-        .rotationEffect(.degrees(rotationDegrees))
-        .accessibilityLabel(MediaPickerConstants.Text.closeCamera.value)
-    }
-
-    private var preparationAlignment: Alignment {
-        placement == .top ? .bottom : .top
-    }
-
-    private var closeAlignment: Alignment {
-        placement == .top ? .bottomTrailing : .topTrailing
     }
 
 }

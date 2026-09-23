@@ -12,5 +12,7 @@ struct CameraPhotoCaptureOptions: Sendable, Equatable {
     let flashMode: CameraFlashMode
     let rotationAngle: Double
     let isMirrored: Bool
+    /// The visible live viewport; nil keeps the camera's full photo frame.
+    let previewFraming: CameraPreviewFraming?
 
 }

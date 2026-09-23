@@ -6,6 +6,7 @@
 //
 
 #if os(iOS)
+import Foundation
 @testable import MediaPicker
 import SwiftUI
 import Testing

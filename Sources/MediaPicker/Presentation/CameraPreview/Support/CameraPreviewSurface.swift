@@ -47,6 +47,15 @@ final class CameraPreviewSurface: CameraFrameReadinessProviding {
         previewView?.rotationAngles ?? .zero
     }
 
+    /** Exact visible viewport used to make the saved photo match the preview. */
+    var captureFraming: CameraPreviewFraming? {
+        previewView?.captureFraming
+    }
+
+    var captureAspectRatio: Double? {
+        captureFraming?.aspectRatio
+    }
+
     func waitForFrame(after sequence: UInt64?) async -> Bool {
         guard let previewView else { return true }
 

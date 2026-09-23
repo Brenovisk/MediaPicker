@@ -16,11 +16,13 @@ struct CapturePhotoUseCase: Sendable {
 
     func execute(
         format: PhotoOutputFormat,
-        rotationAngle: Double
+        rotationAngle: Double,
+        previewFraming: CameraPreviewFraming? = nil
     ) async throws -> CapturedMedia {
         try await cameraSession.capturePhoto(
             format: format,
-            rotationAngle: rotationAngle
+            rotationAngle: rotationAngle,
+            previewFraming: previewFraming
         )
     }
 

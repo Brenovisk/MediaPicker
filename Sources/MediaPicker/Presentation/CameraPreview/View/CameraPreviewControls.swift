@@ -6,135 +6,201 @@
 //
 
 #if os(iOS)
+import PhotosUI
 import SwiftUI
 
-/** Renders accessible photo controls from state supplied by the preview. */
+/** Keeps the shutter and lower actions compact without reserving hidden-control slots. */
 struct CameraPreviewControls: View {
 
-    enum Layout: Equatable {
-        case horizontal
-        case vertical
-    }
-
-    let layout: Layout
-    let rotationDegrees: Double
-    let flashMode: CameraFlashMode
-    let flashAccessibilityLabel: String
-    let canChangeFlashMode: Bool
+    let orientation: CameraPreviewOrientation
+    let options: CameraPreviewControlOptions
+    let canClose: Bool
     let canCapturePhoto: Bool
-    let canSwitchCamera: Bool
-    let onFlash: () -> Void
+    let canSelectLibraryPhoto: Bool
+    let onClose: () -> Void
     let onCapture: () -> Void
-    let onSwitchCamera: () -> Void
-
-    init(
-        layout: Layout = .horizontal,
-        rotationDegrees: Double = .zero,
-        flashMode: CameraFlashMode,
-        flashAccessibilityLabel: String,
-        canChangeFlashMode: Bool,
-        canCapturePhoto: Bool,
-        canSwitchCamera: Bool,
-        onFlash: @escaping () -> Void,
-        onCapture: @escaping () -> Void,
-        onSwitchCamera: @escaping () -> Void
-    ) {
-        self.layout = layout
-        self.rotationDegrees = rotationDegrees
-        self.flashMode = flashMode
-        self.flashAccessibilityLabel = flashAccessibilityLabel
-        self.canChangeFlashMode = canChangeFlashMode
-        self.canCapturePhoto = canCapturePhoto
-        self.canSwitchCamera = canSwitchCamera
-        self.onFlash = onFlash
-        self.onCapture = onCapture
-        self.onSwitchCamera = onSwitchCamera
-    }
+    @Binding var selectedMediaType: MediaType
+    @Binding var galleryItem: PhotosPickerItem?
 
     var body: some View {
-        controlsLayout {
-            flashButton
-            Spacer(minLength: .zero)
-            shutterButton
-            Spacer(minLength: .zero)
-            switchCameraButton
+        Group {
+            if orientation == .portrait {
+                portraitControls
+            } else {
+                landscapeControls
+            }
         }
-        .frame(
-            maxWidth: layout == .horizontal
-                ? CameraPreviewConstants.Layout.controlsMaximumWidth
-                : .infinity,
-            maxHeight: layout == .vertical ? .infinity : nil
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(
+            .horizontal,
+            orientation == .portrait
+                ? CameraPreviewConstants.Layout.horizontalPadding
+                : CameraPreviewConstants.Layout.controlBarPadding
         )
-        .padding(.horizontal, CameraPreviewConstants.Layout.horizontalPadding)
-        .padding(.vertical, CameraPreviewConstants.Layout.verticalPadding)
+        .padding(.vertical, CameraPreviewConstants.Layout.controlBarPadding)
+        .background(options.backgroundColor.opacity(0.4))
+        .background(.ultraThinMaterial)
     }
 
-    private var controlsLayout: AnyLayout {
-        switch layout {
-        case .horizontal:
-            AnyLayout(
-                HStackLayout(spacing: CameraPreviewConstants.Layout.controlsSpacing)
-            )
-        case .vertical:
-            AnyLayout(
-                VStackLayout(spacing: CameraPreviewConstants.Layout.controlsSpacing)
-            )
+    private var landscapeControls: some View {
+        HStack(spacing: CameraPreviewConstants.Layout.controlBarPadding) {
+            if options.showsMediaSelector {
+                landscapeShutterColumn
+                landscapeActionsColumn
+            } else {
+                landscapeShutterActionsColumn
+            }
         }
     }
 
-    private var flashButton: some View {
-        Button(action: onFlash) {
-            CameraPreviewConstants.Icon.flash(flashMode).image
-                .circularLabelButton()
+    private var landscapeShutterColumn: some View {
+        shutterButton
+            .frame(width: CameraPreviewConstants.Layout.shutterSize)
+            .frame(maxHeight: .infinity, alignment: .center)
+    }
+
+    private var landscapeActionsColumn: some View {
+        ZStack {
+            mediaSelector
+
+            closeButton
+                .frame(maxHeight: .infinity, alignment: .bottom)
+
+            galleryButton
+                .frame(maxHeight: .infinity, alignment: .top)
+        }
+    }
+
+    private var landscapeShutterActionsColumn: some View {
+        ZStack {
+            shutterButton
+                .frame(width: CameraPreviewConstants.Layout.shutterSize)
+                .frame(maxHeight: .infinity, alignment: .center)
+
+            closeButton
+                .frame(maxHeight: .infinity, alignment: .bottom)
+
+            galleryButton
+                .frame(maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: CameraPreviewConstants.Layout.controlSize)
+        .frame(maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var portraitControls: some View {
+        if options.showsMediaSelector {
+            VStack {
+                shutterButton
+                sideActions
+            }
+        } else {
+            ZStack {
+                shutterButton
+                sideActions
+            }
+        }
+    }
+
+    private var sideActions: some View {
+        ZStack {
+            mediaSelector
+
+            HStack {
+                closeButton
+                Spacer(minLength: .zero)
+                galleryButton
+            }
+        }
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            CameraControlIcon(
+                systemName: CameraPreviewConstants.Icon.close.systemName
+            )
+                .circularLabelButton(
+                    foregroundColor: options.foregroundColor,
+                    backgroundColor: options.backgroundColor
+                )
         }
         .animatedButton()
-        .disabled(canChangeFlashMode == false)
-        .rotationEffect(.degrees(2 * rotationDegrees))
-        .accessibilityLabel(flashAccessibilityLabel)
-        .accessibilityValue(flashAccessibilityLabel)
+        .disabled(canClose == false)
+        .accessibilityLabel(MediaPickerConstants.Text.closeCamera.value)
+    }
+
+    @ViewBuilder
+    private var mediaSelector: some View {
+        if options.showsMediaSelector {
+            CameraMediaTypeTabBar(
+                orientation: orientation,
+                foregroundColor: options.foregroundColor,
+                backgroundColor: options.backgroundColor,
+                selection: $selectedMediaType
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var galleryButton: some View {
+        if options.canChoosePhotoFromGallery {
+            PhotosPicker(selection: $galleryItem, matching: .images) {
+                CameraControlIcon(
+                    systemName: CameraPreviewConstants.Icon.gallery.systemName
+                )
+            }
+            .circularLabelButton(
+                foregroundColor: options.foregroundColor,
+                backgroundColor: options.backgroundColor
+            )
+            .animatedButton()
+            .disabled(canSelectLibraryPhoto == false)
+            .accessibilityLabel(MediaPickerConstants.Text.gallery.value)
+        }
     }
 
     private var shutterButton: some View {
         Button(action: onCapture) {
-            CameraShutterButtonLabel()
+            CameraShutterButtonLabel(
+                innerColor: selectedMediaType == .video
+                    ? .red
+                    : options.foregroundColor,
+                ringColor: options.foregroundColor
+            )
         }
         .animatedButton()
-        .disabled(canCapturePhoto == false)
-        .rotationEffect(.degrees(2 * rotationDegrees))
-        .accessibilityLabel(MediaPickerConstants.Text.capturePhoto.value)
-    }
-
-    private var switchCameraButton: some View {
-        Button(action: onSwitchCamera) {
-            CameraPreviewConstants.Icon.switchCamera.image
-                .circularLabelButton()
-        }
-        .animatedButton()
-        .disabled(canSwitchCamera == false)
-        .rotationEffect(.degrees(2 * rotationDegrees))
-        .accessibilityLabel(MediaPickerConstants.Text.switchCamera.value)
+        .disabled(
+            canCapturePhoto == false
+                || options.canCapturePhoto(in: selectedMediaType) == false
+        )
+        .accessibilityLabel(
+            selectedMediaType == .photo
+                ? MediaPickerConstants.Text.capturePhoto.value
+                : MediaPickerConstants.Text.videoUnavailable.value
+        )
     }
 
 }
 
 private struct CameraShutterButtonLabel: View {
 
+    let innerColor: Color
+    let ringColor: Color
+
     var body: some View {
         if #available(iOS 26.0, *) {
-            shutter
-                .glassEffect(.regular.interactive(), in: Circle())
+            shutter.glassEffect(.regular.interactive(), in: Circle())
         } else {
-            shutter
-                .background(.ultraThinMaterial, in: Circle())
+            shutter.background(.ultraThinMaterial, in: Circle())
         }
     }
 
     private var shutter: some View {
         Circle()
-            .fill(.white.opacity(0.96))
+            .fill(innerColor.opacity(0.96))
             .padding(CameraPreviewConstants.Layout.shutterInnerInset)
             .overlay {
-                Circle().stroke(.white.opacity(0.9), lineWidth: 3)
+                Circle().stroke(ringColor.opacity(0.9), lineWidth: 3)
             }
             .frame(
                 width: CameraPreviewConstants.Layout.shutterSize,

@@ -14,7 +14,7 @@ import UIKit
 @MainActor
 struct CameraPreviewTests {
 
-    @Test func previewUsesProvidedSessionAndAspectFit() {
+    @Test func previewUsesProvidedSessionAndAspectFill() {
         let session = AVCaptureSession()
         let view = CameraPreviewUIKitView(
             session: session,
@@ -23,7 +23,7 @@ struct CameraPreviewTests {
         let previewLayer = view.layer as? AVCaptureVideoPreviewLayer
 
         #expect(previewLayer?.session === session)
-        #expect(previewLayer?.videoGravity == .resizeAspect)
+        #expect(previewLayer?.videoGravity == .resizeAspectFill)
         #expect(view.backgroundColor == .black)
     }
 
@@ -39,6 +39,20 @@ struct CameraPreviewTests {
 
         #expect(view.layer === originalLayer)
         #expect((view.layer as? AVCaptureVideoPreviewLayer)?.session === session)
+    }
+
+    @Test func captureAspectRatioUsesVisiblePreviewBounds() {
+        let view = CameraPreviewUIKitView(
+            session: AVCaptureSession(),
+            frameStore: CameraPreviewFrameStore()
+        )
+        let surface = CameraPreviewSurface()
+        surface.attach(view)
+        #expect(surface.captureAspectRatio == nil)
+
+        view.frame = CGRect(x: 0, y: 0, width: 400, height: 225)
+
+        #expect(surface.captureAspectRatio == 16.0 / 9.0)
     }
 
     @Test func frontCameraMirroringIsExplicitAndReversible() {

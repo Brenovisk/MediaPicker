@@ -23,11 +23,13 @@ final class CameraPreviewViewModel {
     let capturePhotoUseCase: CapturePhotoUseCase
     let loadPhotoPreviewUseCase: LoadPhotoPreviewUseCase
     let discardCapturedMediaUseCase: DiscardCapturedMediaUseCase
+    let importPhotoFromLibraryUseCase: ImportPhotoFromLibraryUseCase
     let setFlashModeUseCase: SetCameraFlashModeUseCase
     private let setTorchModeUseCase: SetCameraTorchModeUseCase
 
     private let initialPosition: CameraPosition
     let photoOutputFormat: PhotoOutputFormat
+    let showsReview: Bool
     private var sessionUpdatesTask: Task<Void, Never>?
     var shutterFeedbackTask: Task<Void, Never>?
     private(set) var activePosition: CameraPosition
@@ -57,11 +59,13 @@ final class CameraPreviewViewModel {
     init(
         initialPosition: CameraPosition,
         photoOutputFormat: PhotoOutputFormat = .jpeg,
+        showsReview: Bool = true,
         dependencies: CameraPreviewDependencies? = nil
     ) {
         let dependencies = dependencies ?? .live()
         self.initialPosition = initialPosition
         self.photoOutputFormat = photoOutputFormat
+        self.showsReview = showsReview
         activePosition = initialPosition
         previewSession = dependencies.previewSession
         previewSurface = dependencies.previewSurface
@@ -73,6 +77,7 @@ final class CameraPreviewViewModel {
         capturePhotoUseCase = dependencies.capturePhoto
         loadPhotoPreviewUseCase = dependencies.loadPhotoPreview
         discardCapturedMediaUseCase = dependencies.discardCapturedMedia
+        importPhotoFromLibraryUseCase = dependencies.importPhotoFromLibrary
         setFlashModeUseCase = dependencies.setFlashMode
         setTorchModeUseCase = dependencies.setTorchMode
     }

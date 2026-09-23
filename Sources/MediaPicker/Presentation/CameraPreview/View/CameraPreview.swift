@@ -7,6 +7,7 @@
 
 #if os(iOS)
 import Combine
+import PhotosUI
 import SwiftUI
 import UIKit
 
@@ -14,28 +15,38 @@ import UIKit
  Displays the live camera feed and accessible photo controls.
 
  `onCapture` receives a temporary-file result after the user confirms the photo.
+ Pass `controlOptions` to change colors or independently hide Flash, Switch
+ Camera, Gallery, and review. Without review, results are delivered immediately.
  `onCancel` runs after the camera session has closed successfully.
 */
 public struct CameraPreview: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var landscapeSide = CameraLandscapeSide.current
+    @State private var selectedMediaType: MediaType
+    @State private var galleryItem: PhotosPickerItem?
+    @State private var showsGalleryError = false
     @State private var viewModel: CameraPreviewViewModel
+    private let controlOptions: CameraPreviewControlOptions
     private let onCapture: (CapturedMedia) -> Void
     private let onCancel: () -> Void
 
     public init(
         position: CameraPosition = .back,
         photoOutputFormat: PhotoOutputFormat = .jpeg,
+        controlOptions: CameraPreviewControlOptions = CameraPreviewControlOptions(),
         onCapture: @escaping (CapturedMedia) -> Void = { _ in },
         onCancel: @escaping () -> Void = {}
     ) {
         self.onCapture = onCapture
         self.onCancel = onCancel
+        self.controlOptions = controlOptions
+        _selectedMediaType = State(initialValue: controlOptions.initialMediaType)
         _viewModel = State(
             initialValue: CameraPreviewViewModel(
                 initialPosition: position,
-                photoOutputFormat: photoOutputFormat
+                photoOutputFormat: photoOutputFormat,
+                showsReview: controlOptions.showsReview
             )
         )
     }
@@ -93,6 +104,16 @@ public struct CameraPreview: View {
                 try? await viewModel.updateSession(for: phase)
             }
         }
+        .onChange(of: galleryItem) { _, item in
+            guard let item else { return }
+            Task { await selectLibraryPhoto(item) }
+        }
+        .alert(
+            MediaPickerConstants.Text.galleryImportFailed.value,
+            isPresented: $showsGalleryError
+        ) {
+            Button(MediaPickerConstants.Text.dismiss.value, role: .cancel) {}
+        }
     }
 
     private var liveCamera: some View {
@@ -102,51 +123,54 @@ public struct CameraPreview: View {
                 landscapeSide: landscapeSide
             )
 
-            CameraPreviewLayout(orientation: orientation) {
-                topBar(
-                    placement: orientation.topBarPlacement,
-                    rotationDegrees: orientation.controlRotationDegrees
-                )
+            CameraPreviewLayout(
+                orientation: orientation,
+                showsTopBar: controlOptions.showsFlash
+                    || controlOptions.showsSwitchCamera
+                    || viewModel.showsPreparationIndicator,
+                showsMediaSelector: controlOptions.showsMediaSelector
+            ) {
+                topBar(orientation: orientation)
 
                 cameraFeed
 
-                cameraControls(
-                    layout: orientation.controlsLayout,
-                    rotationDegrees: orientation.controlRotationDegrees
-                )
+                cameraControls(orientation: orientation)
             }
+
         }
         .background(Color.black.ignoresSafeArea())
     }
 
     private func topBar(
-        placement: CameraPreviewTopBar.Placement,
-        rotationDegrees: Double
+        orientation: CameraPreviewOrientation
     ) -> some View {
         CameraPreviewTopBar(
-            placement: placement,
-            canClose: viewModel.canClose,
+            orientation: orientation,
+            options: controlOptions,
+            flashMode: viewModel.flashMode,
+            flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
+            canChangeFlashMode: viewModel.canChangeFlashMode
+                && selectedMediaType == .photo,
+            canSwitchCamera: viewModel.canSwitchCamera,
             showsPreparationIndicator: viewModel.showsPreparationIndicator,
-            rotationDegrees: rotationDegrees,
-            onClose: close
+            onFlash: changeFlashMode,
+            onSwitchCamera: switchCamera
         )
     }
 
     private func cameraControls(
-        layout: CameraPreviewControls.Layout,
-        rotationDegrees: Double
+        orientation: CameraPreviewOrientation
     ) -> some View {
         CameraPreviewControls(
-            layout: layout,
-            rotationDegrees: rotationDegrees,
-            flashMode: viewModel.flashMode,
-            flashAccessibilityLabel: viewModel.flashAccessibilityLabel,
-            canChangeFlashMode: viewModel.canChangeFlashMode,
+            orientation: orientation,
+            options: controlOptions,
+            canClose: viewModel.canClose,
             canCapturePhoto: viewModel.canCapturePhoto,
-            canSwitchCamera: viewModel.canSwitchCamera,
-            onFlash: changeFlashMode,
+            canSelectLibraryPhoto: viewModel.canSelectLibraryPhoto,
+            onClose: close,
             onCapture: capturePhoto,
-            onSwitchCamera: switchCamera
+            selectedMediaType: $selectedMediaType,
+            galleryItem: $galleryItem
         )
     }
 
@@ -180,6 +204,7 @@ public struct CameraPreview: View {
                 .allowsHitTesting(false)
                 .ignoresSafeArea()
         }
+        .ignoresSafeArea()
     }
 
 }
@@ -187,10 +212,20 @@ public struct CameraPreview: View {
 extension CameraPreview {
 
     private func capturePhoto() {
-        guard viewModel.canCapturePhoto else { return }
+        guard viewModel.canCapturePhoto,
+              controlOptions.canCapturePhoto(in: selectedMediaType),
+              let previewFraming = viewModel.previewSurface.captureFraming
+        else { return }
+        let rotationAngle = viewModel.previewSurface.rotationAngles.capture
 
         Task {
-            _ = try? await viewModel.capturePhoto()
+            guard let media = try? await viewModel.capturePhoto(
+                previewFraming: previewFraming,
+                rotationAngle: rotationAngle
+            ) else { return }
+            if controlOptions.showsReview == false {
+                deliver(media)
+            }
         }
     }
 
@@ -220,6 +255,26 @@ extension CameraPreview {
 
     private func confirmPhoto() {
         guard let media = viewModel.confirmCapturedPhoto() else { return }
+        deliver(media)
+    }
+
+    private func selectLibraryPhoto(_ item: PhotosPickerItem) async {
+        defer { galleryItem = nil }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self) else {
+                throw MediaPickerError.photoLibraryLoadingFailed
+            }
+            let media = try viewModel.selectLibraryPhoto(data)
+            if controlOptions.showsReview == false {
+                deliver(media)
+            }
+        } catch {
+            showsGalleryError = true
+        }
+    }
+
+    private func deliver(_ media: CapturedMedia) {
         CapturedMediaDebugLogger.logConfirmation(of: media)
         onCapture(media)
     }

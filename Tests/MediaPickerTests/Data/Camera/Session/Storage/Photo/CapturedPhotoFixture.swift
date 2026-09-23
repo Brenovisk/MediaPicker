@@ -13,14 +13,18 @@ import UniformTypeIdentifiers
 /** Creates valid in-memory photo data without requiring camera hardware. */
 enum CapturedPhotoFixture {
 
-    static func jpegData() throws -> Data {
+    static func jpegData(
+        width: Int = 1,
+        height: Int = 1,
+        orientation: Int = 1
+    ) throws -> Data {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         guard let context = CGContext(
             data: nil,
-            width: 1,
-            height: 1,
+            width: width,
+            height: height,
             bitsPerComponent: 8,
-            bytesPerRow: 4,
+            bytesPerRow: width * 4,
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ), let image = context.makeImage() else {
@@ -37,7 +41,11 @@ enum CapturedPhotoFixture {
             throw FixtureError.creationFailed
         }
 
-        CGImageDestinationAddImage(destination, image, nil)
+        CGImageDestinationAddImage(
+            destination,
+            image,
+            [kCGImagePropertyOrientation: orientation] as CFDictionary
+        )
         guard CGImageDestinationFinalize(destination) else {
             throw FixtureError.creationFailed
         }
